@@ -1,0 +1,10 @@
+.venv
+venv
+storage
+devpost
+docs
+data
+backend/tests
+frontend/node_modules
+**/__pycache__
+*.zip

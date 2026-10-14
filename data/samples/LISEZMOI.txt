@@ -1,0 +1,14 @@
+Fichiers d'exemple ClairForm — TOUS FICTIFS
+============================================
+
+Générés le 2026-10-14 par scripts/make_samples.py (les dates internes sont relatives à ce jour).
+
+Parcours conseillé :
+1. Créez un dossier, puis importez 1_appel/appel_a_projets_tremplin_impact.pdf dans l'onglet « Appel ».
+2. Importez tous les fichiers de 2_pieces/ dans l'onglet « Pièces » : ClairForm signale un extrait trop ancien,
+   une note trop longue, un total de budget faux, un CV et une lettre de soutien manquants.
+3. Importez 3_corrections/, supprimez les anciennes versions, confirmez les conditions d'éligibilité :
+   le dossier devient « Prêt à déposer ».
+4. 4_cas_limites/ contient des fichiers qui doivent être refusés ou signalés proprement.
+
+Aucune personne, organisation ou programme réel n'est décrit.

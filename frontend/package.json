@@ -1,0 +1,12 @@
+{
+  "name": "clairform-frontend",
+  "private": true,
+  "description": "Interface de ClairForm (React 16 UMD embarqué, TypeScript compilé en modules ES, sans bundler).",
+  "scripts": {
+    "build": "python ../scripts/build_frontend.py",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "devDependencies": {
+    "typescript": "6.0.3"
+  }
+}

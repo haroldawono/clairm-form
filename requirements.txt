@@ -1,0 +1,10 @@
+# Exécution — versions exactes utilisées pour les tests de cette version.
+starlette==1.6.0
+uvicorn==0.53.0
+pydantic==2.13.5
+pypdf==5.9.0
+python-docx==1.2.0
+openpyxl==3.1.5
+defusedxml==0.7.1
+reportlab==5.0.1
+pillow==12.3.0

@@ -1,0 +1,89 @@
+{
+  "duration": 123.79,
+  "steps": [
+    {
+      "n": 1,
+      "start": 0.5,
+      "caption": "ClairForm vérifie un dossier de candidature à un appel à projets.",
+      "narration": "Un dossier de subvention est souvent refusé pour une raison bête : une pièce manquante, un document périmé, un budget qui ne tombe pas juste. ClairForm vérifie tout ça avant le dépôt."
+    },
+    {
+      "n": 2,
+      "start": 15.04,
+      "caption": "1. Créer un dossier pour l’appel visé.",
+      "narration": "Je crée un dossier pour l’appel auquel je réponds."
+    },
+    {
+      "n": 3,
+      "start": 20.02,
+      "caption": "2. Importer le règlement de l’appel.",
+      "narration": "J’importe le règlement de l’appel, un PDF de deux pages."
+    },
+    {
+      "n": 4,
+      "start": 25.39,
+      "caption": "Chaque exigence est surlignée là où elle est écrite.",
+      "narration": "ClairForm le lit et surligne chaque exigence à l’endroit exact où elle est écrite : les pièces à fournir, les conditions, et les règles chiffrées."
+    },
+    {
+      "n": 5,
+      "start": 37.02,
+      "caption": "La phrase source, la page et les contraintes repérées.",
+      "narration": "Un clic, et j’ai le détail : la phrase d’origine, la page, et la contrainte repérée. Ici, un extrait qui doit dater de moins de trois mois."
+    },
+    {
+      "n": 6,
+      "start": 49.47,
+      "caption": "3. Ajouter toutes ses pièces d’un coup.",
+      "narration": "Maintenant, j’ajoute toutes mes pièces d’un coup. Chaque fichier est reconnu, puis rattaché à l’exigence qu’il couvre."
+    },
+    {
+      "n": 7,
+      "start": 57.76,
+      "caption": "4. Les contrôles : ce qu’un relecteur verrait trop tard.",
+      "narration": "Et là, trois problèmes. L’extrait date de cinq mois. La note fait douze pages au lieu de dix. Et le total du budget est faux de cinq cents euros."
+    },
+    {
+      "n": 8,
+      "start": 71.05,
+      "caption": "Les prochaines actions, dans le bon ordre.",
+      "narration": "La synthèse me dit quoi faire en premier, et me rappelle de demander tout de suite la lettre du partenaire, parce que ça ne dépend pas de moi."
+    },
+    {
+      "n": 9,
+      "start": 83.92,
+      "caption": "5. Importer les versions corrigées…",
+      "narration": "J’importe les versions corrigées, et la lettre de soutien."
+    },
+    {
+      "n": 10,
+      "start": 88.9,
+      "caption": "… et retirer les anciennes.",
+      "narration": "Je retire les anciennes versions."
+    },
+    {
+      "n": 11,
+      "start": 92.19,
+      "caption": "6. Confirmer soi-même les conditions d’éligibilité.",
+      "narration": "Les conditions d’éligibilité, c’est moi qui les confirme. ClairForm ne décide pas à ma place."
+    },
+    {
+      "n": 12,
+      "start": 101.88,
+      "caption": "Le dossier est prêt à déposer.",
+      "narration": "Le dossier est prêt. Chaque exigence a sa pièce, et tous les contrôles sont au vert."
+    },
+    {
+      "n": 13,
+      "start": 109.75,
+      "caption": "7. Exporter le rapport et le paquet de pièces.",
+      "narration": "J’exporte un rapport PDF, et un paquet ZIP avec les pièces renommées dans l’ordre du règlement."
+    },
+    {
+      "n": 14,
+      "start": 117.62,
+      "caption": "ClairForm — vos documents restent chez vous.",
+      "narration": "Et mes documents n’ont jamais quitté mon ordinateur. C’est ClairForm."
+    }
+  ]
+}

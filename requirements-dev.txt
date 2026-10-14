@@ -1,0 +1,5 @@
+# Tests de bout en bout dans le navigateur (facultatif).
+# Après installation : python -m playwright install chromium
+-r requirements.txt
+playwright==1.56.0
+imageio-ffmpeg==0.6.0

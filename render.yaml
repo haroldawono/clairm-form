@@ -1,0 +1,24 @@
+# Déploiement GRATUIT sur Render (https://render.com) : « New + » → « Blueprint » → choisir ce dépôt GitHub.
+# Offre gratuite : 512 Mo de RAM, 0,1 CPU, mise en veille après 15 min sans visite (réveil ≈ 1 min),
+# disque non persistant (les dossiers des visiteurs sont effacés à chaque redémarrage ou mise en veille).
+services:
+  - type: web
+    name: clairform
+    runtime: python
+    plan: free
+    region: frankfurt
+    buildCommand: pip install -r requirements.txt
+    startCommand: python scripts/run.py
+    healthCheckPath: /api/health
+    autoDeployTrigger: commit
+    envVars:
+      - key: CLAIRFORM_MODE
+        value: public
+      - key: CLAIRFORM_HOST
+        value: 0.0.0.0
+      - key: CLAIRFORM_READER
+        value: inprocess        # plus rapide sur 0,1 CPU ; voir docs/DEPLOIEMENT.md
+      - key: CLAIRFORM_RETENTION_DAYS
+        value: "2"
+      - key: CLAIRFORM_MAX_DOSSIERS
+        value: "10"
