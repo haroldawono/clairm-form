@@ -9,6 +9,7 @@ from dataclasses import dataclass
 from datetime import date
 
 from . import taxonomy
+from ..i18n import L
 from .text import add_months, format_amount, format_date_fr, keywords, norm
 
 CREDIT = {"covered": 1.0, "to_verify": 0.5, "partial": None, "missing": 0.0, "problem": 0.0, "to_confirm": 0.0}
@@ -64,7 +65,7 @@ def suggest_links(requirements: list[dict], pieces: list[dict]) -> dict[str, lis
                 if conf == "low":
                     conf = "medium"
                 found.append({"document_id": doc["id"], "confidence": conf,
-                              "reason": f"type de pièce identique ({taxonomy.LABELS.get(doc['proof_type'], doc['proof_type'])})"})
+                              "reason": L(f"type de pièce identique ({taxonomy.label(doc['proof_type'])})", f"same document type ({taxonomy.label(doc['proof_type'])})")})
                 continue
             if not req.get("proof_type") and doc.get("has_text"):
                 kws = keywords(req["label"])[:8]
@@ -73,7 +74,7 @@ def suggest_links(requirements: list[dict], pieces: list[dict]) -> dict[str, lis
                     hits = [k for k in kws if k in hay]
                     if len(hits) >= 2 and len(hits) / len(kws) >= 0.6:
                         found.append({"document_id": doc["id"], "confidence": "medium",
-                                      "reason": "mots communs : " + ", ".join(hits[:4])})
+                                      "reason": L("mots communs : ", "shared words: ") + ", ".join(hits[:4])})
         out[req["id"]] = found
     return out
 
@@ -102,30 +103,35 @@ def assess(dossier: dict, documents: list[dict], requirements: list[dict], links
         days = (deadline - today).days
         src = _source(deadline_fact) if dossier.get("deadline_source") == "call" else None
         if days < 0:
-            add("DEADLINE_PASSED", "error", "Date limite dépassée",
-                f"La date limite ({format_date_fr(deadline)}) est passée depuis {-days} jour{'s' if -days > 1 else ''}.", source=src)
+            add("DEADLINE_PASSED", "error", L("Date limite dépassée", "Deadline passed"),
+                L(f"La date limite ({format_date_fr(deadline)}) est passée depuis {-days} jour{'s' if -days > 1 else ''}.",
+                  f"The deadline ({format_date_fr(deadline)}) passed {-days} day{'s' if -days > 1 else ''} ago."), source=src)
         elif days <= 7:
-            add("DEADLINE_SOON", "warning", "Date limite très proche",
-                f"Il reste {days} jour{'s' if days > 1 else ''} avant la date limite ({format_date_fr(deadline)}).", source=src)
+            add("DEADLINE_SOON", "warning", L("Date limite très proche", "Deadline very close"),
+                L(f"Il reste {days} jour{'s' if days > 1 else ''} avant la date limite ({format_date_fr(deadline)}).",
+                  f"{days} day{'s' if days != 1 else ''} left before the deadline ({format_date_fr(deadline)})."), source=src)
 
     # duplicates
     seen_hash: dict[str, dict] = {}
     for doc in pieces:
         if doc["sha256"] in seen_hash:
-            add("DUPLICATE", "warning", "Fichier importé deux fois",
-                f"« {doc['name']} » est identique à « {seen_hash[doc['sha256']]['name']} ». Une copie ne compte pas comme une pièce distincte.",
+            add("DUPLICATE", "warning", L("Fichier importé deux fois", "File imported twice"),
+                L(f"« {doc['name']} » est identique à « {seen_hash[doc['sha256']]['name']} ». Une copie ne compte pas comme une pièce distincte.",
+                  f"“{doc['name']}” is identical to “{seen_hash[doc['sha256']]['name']}”. A copy does not count as a separate document."),
                 document_id=doc["id"])
         else:
             seen_hash[doc["sha256"]] = doc
 
     for doc in pieces:
         if not doc["has_text"] and doc.get("proof_type_source") != "user":
-            add("UNREAD", "info", "Contenu non lu automatiquement",
-                f"« {doc['name']} » ne contient pas de texte lisible (scan ou image). Indiquez son type pour qu'il soit rattaché.",
+            add("UNREAD", "info", L("Contenu non lu automatiquement", "Content not read automatically"),
+                L(f"« {doc['name']} » ne contient pas de texte lisible (scan ou image). Indiquez son type pour qu'il soit rattaché.",
+                  f"“{doc['name']}” has no readable text (scan or image). Set its type so that it can be linked."),
                 document_id=doc["id"])
         if doc["facts"].get("uncached_formulas"):
-            add("FORMULAS", "warning", "Formules sans valeurs calculées",
-                f"« {doc['name']} » contient {doc['facts']['uncached_formulas']} formule(s) sans résultat enregistré : ouvrez-le dans un tableur, enregistrez-le, puis réimportez-le pour que les totaux soient vérifiés.",
+            add("FORMULAS", "warning", L("Formules sans valeurs calculées", "Formulas without computed values"),
+                L(f"« {doc['name']} » contient {doc['facts']['uncached_formulas']} formule(s) sans résultat enregistré : ouvrez-le dans un tableur, enregistrez-le, puis réimportez-le pour que les totaux soient vérifiés.",
+                  f"“{doc['name']}” contains {doc['facts']['uncached_formulas']} formula(s) with no saved result: open it in a spreadsheet, save it, then import it again so the totals can be checked."),
                 document_id=doc["id"])
 
     # budget checks
@@ -140,10 +146,13 @@ def assess(dossier: dict, documents: list[dict], requirements: list[dict], links
         for t in b.get("totals", []):
             gap = round(t["amount"] - t["lines_sum"], 2)
             if abs(gap) > max(1.0, 0.002 * abs(t["amount"])):
-                add("BUDGET_TOTAL", "error", "Total du budget incohérent",
-                    f"Dans « {doc['name']} », la ligne « {t['label']} » indique {format_amount(t['amount'], b.get('currency'))} "
-                    f"alors que les {t['line_count']} lignes au-dessus totalisent {format_amount(t['lines_sum'], b.get('currency'))} "
-                    f"(écart de {format_amount(abs(gap), b.get('currency'))}).", document_id=doc["id"])
+                add("BUDGET_TOTAL", "error", L("Total du budget incohérent", "Budget total does not add up"),
+                    L(f"Dans « {doc['name']} », la ligne « {t['label']} » indique {format_amount(t['amount'], b.get('currency'))} "
+                      f"alors que les {t['line_count']} lignes au-dessus totalisent {format_amount(t['lines_sum'], b.get('currency'))} "
+                      f"(écart de {format_amount(abs(gap), b.get('currency'))}).",
+                      f"In “{doc['name']}”, the line “{t['label']}” shows {format_amount(t['amount'], b.get('currency'))} "
+                      f"while the {t['line_count']} lines above add up to {format_amount(t['lines_sum'], b.get('currency'))} "
+                      f"(a gap of {format_amount(abs(gap), b.get('currency'))})."), document_id=doc["id"])
 
     requested_values = []
     for doc in pieces:
@@ -155,32 +164,37 @@ def assess(dossier: dict, documents: list[dict], requirements: list[dict], links
             requested_values.append((ra["amount"], ra.get("currency"), doc))
     distinct = {round(v[0], 2) for v in requested_values}
     if len(distinct) > 1:
-        desc = " ; ".join(f"{format_amount(v, c)} dans « {d['name']} »" for v, c, d in requested_values)
-        add("AMOUNT_MISMATCH", "error", "Montant demandé différent selon les documents",
-            f"Le montant demandé n'est pas le même partout : {desc}.", document_id=requested_values[0][2]["id"])
+        desc = " ; ".join(L(f"{format_amount(v, c)} dans « {d['name']} »", f"{format_amount(v, c)} in “{d['name']}”") for v, c, d in requested_values)
+        add("AMOUNT_MISMATCH", "error", L("Montant demandé différent selon les documents", "Requested amount differs between documents"),
+            L(f"Le montant demandé n'est pas le même partout : {desc}.", f"The requested amount is not the same everywhere: {desc}."), document_id=requested_values[0][2]["id"])
 
     if max_amount:
         cap, cap_cur = float(max_amount["value"]), max_amount.get("currency")
         if requested_values:
             amount, cur, doc = max(requested_values, key=lambda v: v[0])
             if cur and cap_cur and cur != cap_cur and not {cur, cap_cur} <= {"FCFA", "XAF", "XOF"}:
-                add("CURRENCY", "warning", "Devise différente de celle de l'appel",
-                    f"L'appel exprime le plafond en {cap_cur}, « {doc['name']} » en {cur}. Comparez après conversion.",
+                add("CURRENCY", "warning", L("Devise différente de celle de l'appel", "Currency differs from the call"),
+                    L(f"L'appel exprime le plafond en {cap_cur}, « {doc['name']} » en {cur}. Comparez après conversion.",
+                      f"The call states the cap in {cap_cur}, “{doc['name']}” in {cur}. Compare after conversion."),
                     document_id=doc["id"], source=_source(max_amount))
                 rule_results["max_amount"] = "unknown"
             elif amount > cap + 0.5:
-                add("BUDGET_CEILING", "error", "Montant demandé supérieur au plafond",
-                    f"Vous demandez {format_amount(amount, cur or cap_cur)} (« {doc['name']} ») alors que l'appel plafonne l'aide à "
-                    f"{format_amount(cap, cap_cur)}.", document_id=doc["id"], source=_source(max_amount))
+                add("BUDGET_CEILING", "error", L("Montant demandé supérieur au plafond", "Requested amount above the cap"),
+                    L(f"Vous demandez {format_amount(amount, cur or cap_cur)} (« {doc['name']} ») alors que l'appel plafonne l'aide à "
+                      f"{format_amount(cap, cap_cur)}.",
+                      f"You request {format_amount(amount, cur or cap_cur)} (“{doc['name']}”) but the call caps the grant at "
+                      f"{format_amount(cap, cap_cur)}."), document_id=doc["id"], source=_source(max_amount))
                 rule_results["max_amount"] = "fail"
             else:
                 rule_results["max_amount"] = "pass"
         else:
             rule_results["max_amount"] = "unknown"
             if budget_docs:
-                add("REQUESTED_NOT_FOUND", "warning", "Montant demandé introuvable",
-                    "Aucune ligne « montant demandé » ou « subvention demandée » n'a été trouvée dans le budget : "
-                    f"le respect du plafond de {format_amount(cap, cap_cur)} ne peut pas être vérifié.", source=_source(max_amount))
+                add("REQUESTED_NOT_FOUND", "warning", L("Montant demandé introuvable", "Requested amount not found"),
+                    L("Aucune ligne « montant demandé » ou « subvention demandée » n'a été trouvée dans le budget : "
+                      f"le respect du plafond de {format_amount(cap, cap_cur)} ne peut pas être vérifié.",
+                      "No “amount requested” or “grant requested” line was found in the budget: "
+                      f"the cap of {format_amount(cap, cap_cur)} cannot be checked."), source=_source(max_amount))
 
     if min_cofi:
         pct = float(min_cofi["value"])
@@ -189,9 +203,11 @@ def assess(dossier: dict, documents: list[dict], requirements: list[dict], links
         if b and b.get("cofinancing") and b.get("expense_total"):
             ratio = 100 * b["cofinancing"]["amount"] / b["expense_total"]
             if ratio + 0.05 < pct:
-                add("COFINANCING", "error", "Cofinancement insuffisant",
-                    f"Votre apport représente {ratio:.1f} % du budget ({format_amount(b['cofinancing']['amount'], b.get('currency'))} "
-                    f"sur {format_amount(b['expense_total'], b.get('currency'))}), l'appel en exige au moins {pct:g} %.",
+                add("COFINANCING", "error", L("Cofinancement insuffisant", "Co-funding too low"),
+                    L(f"Votre apport représente {ratio:.1f} % du budget ({format_amount(b['cofinancing']['amount'], b.get('currency'))} "
+                      f"sur {format_amount(b['expense_total'], b.get('currency'))}), l'appel en exige au moins {pct:g} %.",
+                      f"Your contribution is {ratio:.1f}% of the budget ({format_amount(b['cofinancing']['amount'], b.get('currency'))} "
+                      f"out of {format_amount(b['expense_total'], b.get('currency'))}); the call requires at least {pct:g}%."),
                     document_id=doc["id"], source=_source(min_cofi))
                 rule_results["min_cofinancing_pct"] = "fail"
             else:
@@ -199,9 +215,11 @@ def assess(dossier: dict, documents: list[dict], requirements: list[dict], links
         else:
             rule_results["min_cofinancing_pct"] = "unknown"
             if budget_docs:
-                add("COFINANCING_NOT_FOUND", "warning", "Apport propre introuvable dans le budget",
-                    f"L'appel exige un cofinancement d'au moins {pct:g} %, mais aucune ligne « apport », « fonds propres » ou "
-                    "« cofinancement » n'a été trouvée.", source=_source(min_cofi))
+                add("COFINANCING_NOT_FOUND", "warning", L("Apport propre introuvable dans le budget", "Own contribution not found in the budget"),
+                    L(f"L'appel exige un cofinancement d'au moins {pct:g} %, mais aucune ligne « apport », « fonds propres » ou "
+                      "« cofinancement » n'a été trouvée.",
+                      f"The call requires at least {pct:g}% co-funding, but no “contribution”, “own funds” or "
+                      "“co-funding” line was found."), source=_source(min_cofi))
 
     if max_duration:
         limit = int(max_duration["value"])
@@ -209,9 +227,11 @@ def assess(dossier: dict, documents: list[dict], requirements: list[dict], links
         if spans:
             span, doc = max(spans, key=lambda s: s[0]["months"])
             if span["months"] > limit + 0.5:
-                add("DURATION", "error", "Durée du projet supérieure au maximum",
-                    f"« {doc['name']} » s'étend du {format_date_fr(_d(span['start']))} au {format_date_fr(_d(span['end']))} "
-                    f"(environ {span['months']:.0f} mois) ; l'appel limite la durée à {limit} mois.", document_id=doc["id"], source=_source(max_duration))
+                add("DURATION", "error", L("Durée du projet supérieure au maximum", "Project longer than allowed"),
+                    L(f"« {doc['name']} » s'étend du {format_date_fr(_d(span['start']))} au {format_date_fr(_d(span['end']))} "
+                      f"(environ {span['months']:.0f} mois) ; l'appel limite la durée à {limit} mois.",
+                      f"“{doc['name']}” runs from {format_date_fr(_d(span['start']))} to {format_date_fr(_d(span['end']))} "
+                      f"(about {span['months']:.0f} months); the call limits the duration to {limit} months."), document_id=doc["id"], source=_source(max_duration))
                 rule_results["max_duration_months"] = "fail"
             else:
                 rule_results["max_duration_months"] = "pass"
@@ -229,7 +249,7 @@ def assess(dossier: dict, documents: list[dict], requirements: list[dict], links
                   "rejected": [doc["id"] for doc in pieces if decisions.get((req["id"], doc["id"])) == "rejected"]}
         if req["status"] != "active":
             result["status"] = "ignored"
-            result["explanation"] = "Exigence écartée : elle n'est pas prise en compte."
+            result["explanation"] = L("Exigence écartée : elle n'est pas prise en compte.", "Requirement dismissed: it is not taken into account.")
             req_results.append(result)
             continue
         c = req.get("constraints") or {}
@@ -241,7 +261,7 @@ def assess(dossier: dict, documents: list[dict], requirements: list[dict], links
                 if decision == "rejected":
                     continue
                 if decision == "confirmed":
-                    linked.append({"document_id": doc["id"], "origin": "user", "confidence": "high", "reason": "rattaché par vous"})
+                    linked.append({"document_id": doc["id"], "origin": "user", "confidence": "high", "reason": L("rattaché par vous", "linked by you")})
                 elif doc["id"] in auto:
                     s = auto[doc["id"]]
                     linked.append({"document_id": doc["id"], "origin": "auto", "confidence": s["confidence"], "reason": s["reason"]})
@@ -259,38 +279,41 @@ def assess(dossier: dict, documents: list[dict], requirements: list[dict], links
             if not linked:
                 result["status"] = "missing"
                 ptype = taxonomy.BY_CODE.get(req.get("proof_type") or "")
-                result["explanation"] = "Aucune pièce ne correspond encore." + (f" Cette pièce est {ptype.external_hint} : anticipez le délai." if ptype and ptype.external else "")
+                result["explanation"] = L("Aucune pièce ne correspond encore.", "No document matches yet.") + (
+                    L(f" Cette pièce est {ptype.external_hint} : anticipez le délai.", f" This document is {taxonomy.hint(ptype)}: allow time for it.")
+                    if ptype and ptype.external else "")
             elif any(x.severity == "error" for x in own_checks):
                 result["status"] = "problem"
                 result["explanation"] = next(x.title for x in own_checks if x.severity == "error") + "."
             elif len(distinct_hashes) < needed:
                 result["status"] = "partial"
                 result["coverage"] = len(distinct_hashes) / needed
-                result["explanation"] = f"{len(distinct_hashes)} pièce(s) distincte(s) sur {needed} demandées."
+                result["explanation"] = L(f"{len(distinct_hashes)} pièce(s) distincte(s) sur {needed} demandées.", f"{len(distinct_hashes)} separate document(s) out of {needed} required.")
             elif all(l["confidence"] == "high" for l in linked):
                 result["status"] = "covered"
-                result["explanation"] = "Pièce rattachée par vous." if all(l["origin"] == "user" for l in linked) else "Pièce reconnue avec un niveau de confiance élevé."
+                result["explanation"] = (L("Pièce rattachée par vous.", "Document linked by you.") if all(l["origin"] == "user" for l in linked)
+                                         else L("Pièce reconnue avec un niveau de confiance élevé.", "Document recognised with high confidence."))
             else:
                 result["status"] = "to_verify"
-                result["explanation"] = "Rattachement proposé automatiquement : confirmez qu'il s'agit bien de la bonne pièce."
+                result["explanation"] = L("Rattachement proposé automatiquement : confirmez qu'il s'agit bien de la bonne pièce.", "Link suggested automatically: confirm that this is the right document.")
         else:
             rule_key = c.get("rule")
             auto_result = rule_results.get(rule_key) if rule_key else None
             if auto_result == "fail":
                 result["status"] = "problem"
-                result["explanation"] = "Le contrôle automatique montre que cette règle n'est pas respectée."
+                result["explanation"] = L("Le contrôle automatique montre que cette règle n'est pas respectée.", "The automatic check shows that this rule is not met.")
                 code = {"max_amount": "BUDGET_CEILING", "min_cofinancing_pct": "COFINANCING", "max_duration_months": "DURATION"}[rule_key]
                 result["checks"] = [x.id for x in checks if x.code == code]
             elif auto_result == "pass":
                 result["status"] = "covered"
-                result["explanation"] = "Vérifié automatiquement à partir de vos pièces."
+                result["explanation"] = L("Vérifié automatiquement à partir de vos pièces.", "Checked automatically from your documents.")
             elif req.get("declared"):
                 result["status"] = "covered"
-                result["explanation"] = "Vous avez confirmé remplir cette condition."
+                result["explanation"] = L("Vous avez confirmé remplir cette condition.", "You confirmed that you meet this condition.")
             else:
                 result["status"] = "to_confirm"
-                result["explanation"] = ("Condition d'éligibilité : confirmez que vous la remplissez." if req["kind"] == "condition"
-                                         else "Règle à respecter : confirmez-la, ou ajoutez la pièce qui permet de la vérifier.")
+                result["explanation"] = (L("Condition d'éligibilité : confirmez que vous la remplissez.", "Eligibility condition: confirm that you meet it.") if req["kind"] == "condition"
+                                         else L("Règle à respecter : confirmez-la, ou ajoutez la pièce qui permet de la vérifier.", "Rule to follow: confirm it, or add the document that allows it to be checked."))
         req_results.append(result)
 
     # ---------------------------------------------------------------- readiness
@@ -310,13 +333,13 @@ def assess(dossier: dict, documents: list[dict], requirements: list[dict], links
     required_active = [(r, x) for r, x in zip(requirements, req_results) if x["status"] != "ignored" and r["required"]]
     errors = [x for x in checks if x.severity == "error"]
     if not active:
-        readiness = {"code": "empty", "label": "Checklist vide"}
+        readiness = {"code": "empty", "label": L("Checklist vide", "Empty checklist")}
     elif all(x["status"] == "covered" for _, x in required_active) and not errors:
-        readiness = {"code": "ready", "label": "Prêt à déposer"}
+        readiness = {"code": "ready", "label": L("Prêt à déposer", "Ready to submit")}
     elif errors or any(x["status"] in {"problem"} for _, x in required_active):
-        readiness = {"code": "blocked", "label": "Corrections nécessaires"}
+        readiness = {"code": "blocked", "label": L("Corrections nécessaires", "Fixes needed")}
     else:
-        readiness = {"code": "in_progress", "label": "En préparation"}
+        readiness = {"code": "in_progress", "label": L("En préparation", "In progress")}
 
     actions = _next_actions(requirements, req_results, checks, piece_by_id, deadline, today)
     return {
@@ -340,33 +363,42 @@ def _document_checks(add, req: dict, doc: dict, c: dict, reference_day: date, de
     if c.get("max_pages"):
         if doc.get("page_count"):
             if doc["page_count"] > c["max_pages"]:
-                add("PAGE_LIMIT", "error", "Nombre de pages dépassé",
-                    f"« {name} » compte {doc['page_count']} pages ; l'appel en autorise {c['max_pages']} au maximum.", rid, did)
+                add("PAGE_LIMIT", "error", L("Nombre de pages dépassé", "Too many pages"),
+                    L(f"« {name} » compte {doc['page_count']} pages ; l'appel en autorise {c['max_pages']} au maximum.",
+                      f"“{name}” has {doc['page_count']} pages; the call allows {c['max_pages']} at most."), rid, did)
         elif doc["ext"] in {"docx"}:
-            add("PAGE_UNKNOWN", "info", "Nombre de pages non vérifiable",
-                f"Le nombre de pages de « {name} » n'est pas enregistré dans le fichier. Exportez-le en PDF pour le vérifier (maximum {c['max_pages']}).", rid, did)
+            add("PAGE_UNKNOWN", "info", L("Nombre de pages non vérifiable", "Page count cannot be checked"),
+                L(f"Le nombre de pages de « {name} » n'est pas enregistré dans le fichier. Exportez-le en PDF pour le vérifier (maximum {c['max_pages']}).",
+                  f"The page count of “{name}” is not stored in the file. Export it to PDF to check it (maximum {c['max_pages']})."), rid, did)
     if c.get("max_age_months"):
         ref = _d(facts.get("issue_date")) or _d(facts.get("latest_date"))
         limit = add_months(reference_day, -int(c["max_age_months"]))
         if ref is None:
             if doc["has_text"]:
-                add("DATE_NOT_FOUND", "warning", "Date du document introuvable",
-                    f"L'appel demande un document de moins de {c['max_age_months']} mois, mais aucune date n'a été trouvée dans « {name} ».", rid, did)
+                add("DATE_NOT_FOUND", "warning", L("Date du document introuvable", "Document date not found"),
+                    L(f"L'appel demande un document de moins de {c['max_age_months']} mois, mais aucune date n'a été trouvée dans « {name} ».",
+                      f"The call requires a document less than {c['max_age_months']} months old, but no date was found in “{name}”."), rid, did)
         elif ref < limit:
-            when = "à la date limite" if deadline and reference_day == deadline else "aujourd'hui"
-            add("STALE", "error", "Document trop ancien",
-                f"« {name} » est daté du {format_date_fr(ref)} ; il doit dater de moins de {c['max_age_months']} mois {when} "
-                f"(donc après le {format_date_fr(limit)}).", rid, did)
+            at_deadline = bool(deadline and reference_day == deadline)
+            add("STALE", "error", L("Document trop ancien", "Document too old"),
+                L(f"« {name} » est daté du {format_date_fr(ref)} ; il doit dater de moins de {c['max_age_months']} mois "
+                  f"{'à la date limite' if at_deadline else 'aujourd’hui'} (donc après le {format_date_fr(limit)}).",
+                  f"“{name}” is dated {format_date_fr(ref)}; it must be less than {c['max_age_months']} months old "
+                  f"{'at the deadline' if at_deadline else 'today'} (so issued after {format_date_fr(limit)})."), rid, did)
     expiry = _d(facts.get("expiry_date"))
     if expiry and (c.get("must_be_valid") or req.get("proof_type") == "identity"):
         if expiry < reference_day:
-            add("EXPIRED", "error", "Document expiré",
-                f"« {name} » expire le {format_date_fr(expiry)}, " + (f"avant la date limite ({format_date_fr(reference_day)})." if deadline and reference_day == deadline else "elle n'est donc plus valable aujourd'hui."), rid, did)
+            at_deadline = bool(deadline and reference_day == deadline)
+            add("EXPIRED", "error", L("Document expiré", "Document expired"),
+                L(f"« {name} » expire le {format_date_fr(expiry)}, " + (f"avant la date limite ({format_date_fr(reference_day)})." if at_deadline else "il n'est donc plus valable aujourd'hui."),
+                  f"“{name}” expires on {format_date_fr(expiry)}, " + (f"before the deadline ({format_date_fr(reference_day)})." if at_deadline else "so it is no longer valid today.")), rid, did)
     if c.get("format") == "pdf" and doc["ext"] != "pdf":
-        add("FORMAT", "warning", "Format attendu : PDF", f"L'appel demande un PDF ; « {name} » est au format {doc['ext'].upper()}.", rid, did)
+        add("FORMAT", "warning", L("Format attendu : PDF", "Expected format: PDF"),
+            L(f"L'appel demande un PDF ; « {name} » est au format {doc['ext'].upper()}.", f"The call asks for a PDF; “{name}” is a {doc['ext'].upper()} file."), rid, did)
     if (c.get("signed") or req.get("proof_type") in {"support_letter", "declaration"}) and doc["has_text"] and facts.get("signature_cue") is False:
-        add("SIGNATURE", "warning", "Signature non détectée",
-            f"Aucune mention de signature n'a été trouvée dans « {name} ». Vérifiez que le document est bien signé.", rid, did)
+        add("SIGNATURE", "warning", L("Signature non détectée", "Signature not detected"),
+            L(f"Aucune mention de signature n'a été trouvée dans « {name} ». Vérifiez que le document est bien signé.",
+              f"No mention of a signature was found in “{name}”. Check that the document is signed."), rid, did)
 
 
 def _next_actions(requirements, results, checks, piece_by_id, deadline, today) -> list[dict]:
@@ -388,22 +420,27 @@ def _next_actions(requirements, results, checks, piece_by_id, deadline, today) -
         if res["status"] == "missing":
             if ptype and ptype.external:
                 actions.append({"verb": "Demander", "title": req["label"], "requirement_id": req["id"], "priority": 80 + crit + (15 if urgent else 0),
-                                "detail": f"Pièce {ptype.external_hint} : lancez la demande maintenant, le délai ne dépend pas de vous."})
+                                "detail": L(f"Pièce {ptype.external_hint} : lancez la demande maintenant, le délai ne dépend pas de vous.",
+                                            f"Document {taxonomy.hint(ptype)}: request it now, the delay does not depend on you.")})
             else:
                 actions.append({"verb": "Ajouter", "title": req["label"], "requirement_id": req["id"], "priority": 60 + crit,
-                                "detail": "Importez la pièce correspondante dans l'onglet Pièces."})
+                                "detail": L("Importez la pièce correspondante dans l'onglet Pièces.", "Import the matching document in the Documents tab.")})
         elif res["status"] == "partial":
             actions.append({"verb": "Compléter", "title": req["label"], "requirement_id": req["id"], "priority": 55 + crit, "detail": res["explanation"]})
         elif res["status"] == "to_verify":
             doc = piece_by_id.get(res["links"][0]["document_id"]) if res["links"] else None
             actions.append({"verb": "Vérifier", "title": req["label"], "requirement_id": req["id"], "priority": 40 + crit,
-                            "detail": f"Confirmez que « {doc['name']} » correspond bien à cette exigence." if doc else res["explanation"]})
+                            "detail": L(f"Confirmez que « {doc['name']} » correspond bien à cette exigence.", f"Confirm that “{doc['name']}” really matches this requirement.") if doc else res["explanation"]})
         elif res["status"] == "to_confirm":
             actions.append({"verb": "Confirmer", "title": req["label"], "requirement_id": req["id"], "priority": 35 + crit, "detail": res["explanation"]})
     for chk in checks:
         if chk.severity == "warning":
             actions.append({"verb": "Vérifier", "title": chk.title, "detail": chk.detail, "requirement_id": chk.requirement_id,
                             "document_id": chk.document_id, "check_id": chk.id, "priority": 30})
+    verbs = {"Corriger": L("Corriger", "Fix"), "Demander": L("Demander", "Request"), "Ajouter": L("Ajouter", "Add"),
+             "Compléter": L("Compléter", "Complete"), "Vérifier": L("Vérifier", "Check"), "Confirmer": L("Confirmer", "Confirm")}
+    for a in actions:
+        a["verb_label"] = verbs.get(a["verb"], a["verb"])
     actions.sort(key=lambda a: -a["priority"])
     for i, a in enumerate(actions, 1):
         a["id"] = f"A{i:02d}"

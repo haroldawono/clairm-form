@@ -1,3 +1,4 @@
+import { L, LANG } from './i18n.js';
 export class ApiError extends Error {
     constructor(message, code, status) {
         super(message);
@@ -5,7 +6,7 @@ export class ApiError extends Error {
         this.status = status;
     }
 }
-const NETWORK_MESSAGE = 'Impossible de joindre ClairForm. Vérifiez que le serveur local est toujours lancé (python scripts/run.py), puis réessayez.';
+const NETWORK_MESSAGE = L('Impossible de joindre ClairForm. Vérifiez votre connexion ou que le serveur est toujours lancé, puis réessayez.', 'ClairForm cannot be reached. Check your connection or that the server is still running, then try again.');
 function parseBody(text, status) {
     if (!text)
         return null;
@@ -14,8 +15,8 @@ function parseBody(text, status) {
     }
     catch {
         throw new ApiError(status >= 500
-            ? 'Le serveur a renvoyé une erreur illisible. Relancez ClairForm puis réessayez.'
-            : 'Réponse inattendue du serveur (format invalide).', 'BAD-RESPONSE', status);
+            ? L('Le serveur a renvoyé une erreur illisible. Relancez ClairForm puis réessayez.', 'The server returned an unreadable error. Restart ClairForm and try again.')
+            : L('Réponse inattendue du serveur (format invalide).', 'Unexpected server response (invalid format).'), 'BAD-RESPONSE', status);
     }
 }
 function toError(status, body) {
@@ -23,17 +24,17 @@ function toError(status, body) {
     if (err && typeof err.message === 'string')
         return new ApiError(err.message, String(err.code || 'ERROR'), status);
     if (status === 413)
-        return new ApiError('Le fichier est trop volumineux.', 'DOC-TOO-LARGE', status);
+        return new ApiError(L('Le fichier est trop volumineux.', 'The file is too large.'), 'DOC-TOO-LARGE', status);
     if (status >= 500)
-        return new ApiError('Erreur interne du serveur. Réessayez ; si elle persiste, consultez le terminal de ClairForm.', 'INTERNAL', status);
-    return new ApiError(`La demande a échoué (code ${status}).`, 'HTTP', status);
+        return new ApiError(L('Erreur interne du serveur. Réessayez ; si elle persiste, consultez le terminal de ClairForm.', 'Internal server error. Try again; if it persists, check the ClairForm terminal.'), 'INTERNAL', status);
+    return new ApiError(L(`La demande a échoué (code ${status}).`, `The request failed (code ${status}).`), 'HTTP', status);
 }
 export async function request(method, path, body) {
     let response;
     try {
         response = await fetch(path, {
             method,
-            headers: body === undefined ? { 'X-ClairForm': '1' } : { 'X-ClairForm': '1', 'Content-Type': 'application/json' },
+            headers: body === undefined ? { 'X-ClairForm': '1', 'X-ClairForm-Lang': LANG } : { 'X-ClairForm': '1', 'X-ClairForm-Lang': LANG, 'Content-Type': 'application/json' },
             body: body === undefined ? undefined : JSON.stringify(body),
             credentials: 'same-origin',
         });
@@ -49,7 +50,7 @@ export async function request(method, path, body) {
 }
 function expectState(data) {
     if (!data || !data.state || !data.state.dossier || !data.state.assessment) {
-        throw new ApiError('Réponse incomplète du serveur : l’état du dossier est absent.', 'BAD-RESPONSE', 200);
+        throw new ApiError(L('Réponse incomplète du serveur : l’état du dossier est absent.', 'Incomplete server response: the application state is missing.'), 'BAD-RESPONSE', 200);
     }
     return data.state;
 }
@@ -59,7 +60,7 @@ export const api = {
     list: async () => {
         const data = await request('GET', '/api/dossiers');
         if (!data || !Array.isArray(data.dossiers))
-            throw new ApiError('Réponse inattendue du serveur.', 'BAD-RESPONSE', 200);
+            throw new ApiError(L('Réponse inattendue du serveur.', 'Unexpected server response.'), 'BAD-RESPONSE', 200);
         return data.dossiers;
     },
     create: async (title, program, deadline) => expectState(await request('POST', '/api/dossiers', { title, program, deadline })),
@@ -76,7 +77,7 @@ export const api = {
     setLink: async (id, rid, docId, decision) => expectState(await request('PUT', `${D(id)}/requirements/${rid}/links/${docId}`, { decision })),
     cancelUpload: async (id, uploadId) => expectState(await request('POST', `${D(id)}/uploads/${uploadId}/cancel`)),
     fileUrl: (id, docId) => `${D(id)}/documents/${docId}/file`,
-    exportUrl: (id, kind) => `${D(id)}/export/${kind}`,
+    exportUrl: (id, kind) => `${D(id)}/export/${kind}?lang=${LANG}`,
 };
 function randomId() {
     const bytes = new Uint8Array(12);
@@ -90,6 +91,7 @@ export function upload(dossierId, role, file, onProgress, onSent) {
     const promise = new Promise((resolve, reject) => {
         xhr.open('POST', `${D(dossierId)}/documents?role=${role}&upload_id=${uploadId}&filename=${encodeURIComponent(file.name)}`);
         xhr.setRequestHeader('X-ClairForm', '1');
+        xhr.setRequestHeader('X-ClairForm-Lang', LANG);
         xhr.setRequestHeader('Content-Type', 'application/octet-stream');
         xhr.upload.onprogress = (e) => {
             if (e.lengthComputable)
@@ -97,8 +99,8 @@ export function upload(dossierId, role, file, onProgress, onSent) {
         };
         xhr.upload.onload = () => onSent();
         xhr.onerror = () => reject(new ApiError(NETWORK_MESSAGE, 'NETWORK', 0));
-        xhr.onabort = () => reject(new ApiError('Import annulé.', 'ABORTED', 0));
-        xhr.ontimeout = () => reject(new ApiError('Le serveur met trop de temps à répondre.', 'TIMEOUT', 0));
+        xhr.onabort = () => reject(new ApiError(L('Import annulé.', 'Import cancelled.'), 'ABORTED', 0));
+        xhr.ontimeout = () => reject(new ApiError(L('Le serveur met trop de temps à répondre.', 'The server is taking too long to respond.'), 'TIMEOUT', 0));
         xhr.onload = () => {
             try {
                 const data = parseBody(xhr.responseText, xhr.status);
@@ -106,7 +108,7 @@ export function upload(dossierId, role, file, onProgress, onSent) {
                     return reject(toError(xhr.status, data));
                 const state = expectState(data);
                 if (!data.document)
-                    return reject(new ApiError('Réponse incomplète du serveur.', 'BAD-RESPONSE', xhr.status));
+                    return reject(new ApiError(L('Réponse incomplète du serveur.', 'Incomplete server response.'), 'BAD-RESPONSE', xhr.status));
                 resolve({ document: data.document, state });
             }
             catch (err) {

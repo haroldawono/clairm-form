@@ -6,7 +6,7 @@ from dataclasses import asdict
 from datetime import date
 from pathlib import Path
 
-from . import samples
+from . import i18n, samples
 from .analysis import taxonomy
 from .analysis.assessment import assess
 from .analysis.call_parser import parse_call
@@ -37,9 +37,9 @@ def light_document(doc: dict) -> dict:
     return {
         "id": doc["id"], "role": doc["role"], "name": doc["name"], "ext": doc["ext"], "size": doc["size"],
         "sha256": doc["sha256"], "page_count": doc["page_count"], "has_text": doc["has_text"],
-        "proof_type": doc["proof_type"], "proof_type_label": taxonomy.LABELS.get(doc["proof_type"] or "", None),
+        "proof_type": doc["proof_type"], "proof_type_label": taxonomy.label(doc["proof_type"]),
         "proof_type_source": doc["proof_type_source"], "proof_confidence": doc["proof_confidence"],
-        "proof_reasons": doc["proof_reasons"], "facts": facts, "created_at": doc["created_at"],
+        "proof_reasons": [i18n.reason(x) for x in (doc["proof_reasons"] or [])], "facts": facts, "created_at": doc["created_at"],
         "requirement_count": (doc.get("facts") or {}).get("requirement_count"),
     }
 
@@ -307,10 +307,10 @@ class Service:
         return {
             "dossier": self._public_dossier(d),
             "documents": [light_document(x) for x in docs],
-            "requirements": [{k: v for k, v in r.items() if k not in {"dossier_id"}} | {"proof_type_label": taxonomy.LABELS.get(r["proof_type"] or "")}
+            "requirements": [{k: v for k, v in r.items() if k not in {"dossier_id"}} | {"proof_type_label": taxonomy.label(r["proof_type"]), "reason": i18n.reason(r.get("reason"))}
                              for r in requirements],
             "assessment": assess(d, docs, requirements, self.db.links(dossier_id)),
-            "proof_types": [{"code": t.code, "label": t.label, "external": t.external} for t in taxonomy.TYPES] + [{"code": "other", "label": "Autre document", "external": False}],
+            "proof_types": taxonomy.types_payload() + [{"code": "other", "label": taxonomy.label("other"), "external": False}],
         }
 
     def events(self, dossier_id: str) -> list[dict]:

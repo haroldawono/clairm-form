@@ -1,6 +1,7 @@
 import { Component, cx } from '../lib/react.js';
 import { api } from '../lib/api.js';
 import { constraintChips, KIND, STATUS, STATUS_ORDER } from '../lib/format.js';
+import { L } from '../lib/i18n.js';
 import { Icon, Modal, StatusChip } from '../components/ui.js';
 import type { Ctx } from './Dossier.js';
 import type { Kind, Status } from '../lib/types.js';
@@ -38,14 +39,14 @@ export class Checklist extends Component<{ ctx: Ctx }, State> {
       <div className="checklist">
         <div className="toolbar" role="search">
           <label className="field field-inline">
-            <span className="sr-only">Rechercher une exigence</span>
+            <span className="sr-only">{L('Rechercher une exigence', 'Search requirements')}</span>
             <Icon name="search" size={16} />
-            <input type="search" placeholder="Rechercher…" value={this.state.q} onChange={(e: any) => this.setState({ q: e.target.value })} />
+            <input type="search" placeholder={L('Rechercher…', 'Search…')} value={this.state.q} onChange={(e: any) => this.setState({ q: e.target.value })} />
           </label>
           <label className="field field-inline">
-            <span className="field-label-inline">Statut</span>
+            <span className="field-label-inline">{L('Statut', 'Status')}</span>
             <select value={this.state.status} onChange={(e: any) => this.setState({ status: e.target.value })}>
-              <option value="">Tous ({state.requirements.length})</option>
+              <option value="">{L('Tous', 'All')} ({state.requirements.length})</option>
               {STATUS_ORDER.filter((s) => counts[s]).map((s) => (
                 <option key={s} value={s}>
                   {STATUS[s].label} ({counts[s]})
@@ -56,32 +57,33 @@ export class Checklist extends Component<{ ctx: Ctx }, State> {
           <label className="field field-inline">
             <span className="field-label-inline">Type</span>
             <select value={this.state.kind} onChange={(e: any) => this.setState({ kind: e.target.value })}>
-              <option value="">Tous</option>
-              <option value="document">Pièces</option>
+              <option value="">{L('Tous', 'All')}</option>
+              <option value="document">{L('Pièces', 'Documents')}</option>
               <option value="condition">Conditions</option>
-              <option value="rule">Règles</option>
+              <option value="rule">{L('Règles', 'Rules')}</option>
             </select>
           </label>
           {filtered ? (
             <button type="button" className="btn btn-quiet btn-sm" onClick={() => this.setState({ status: '', kind: '', q: '' })}>
-              Effacer les filtres
+              {L('Effacer les filtres', 'Clear filters')}
             </button>
           ) : null}
           <span className="toolbar-spacer" />
           <button type="button" className="btn btn-secondary" onClick={() => this.setState({ adding: true })}>
-            <Icon name="plus" /> Ajouter une exigence
+            <Icon name="plus" /> {L('Ajouter une exigence', 'Add a requirement')}
           </button>
         </div>
 
         {!state.requirements.length ? (
           <div className="empty">
-            <p>La checklist est vide.</p>
+            <p>{L('La checklist est vide.', 'The checklist is empty.')}</p>
             <p className="muted">
-              Importez le règlement dans l’onglet <a href={`#/d/${state.dossier.id}/appel`}>Appel</a>, ou ajoutez les exigences à la main.
+              {L('Importez le règlement dans l’onglet', 'Import the rules in the')} <a href={`#/d/${state.dossier.id}/appel`}>{L('Appel', 'Call')}</a>
+              {L(', ou ajoutez les exigences à la main.', ' tab, or add the requirements by hand.')}
             </p>
           </div>
         ) : null}
-        {state.requirements.length && !rows.length ? <p className="empty muted">Aucune exigence ne correspond à ces filtres.</p> : null}
+        {state.requirements.length && !rows.length ? <p className="empty muted">{L('Aucune exigence ne correspond à ces filtres.', 'No requirement matches these filters.')}</p> : null}
 
         {groups.map((g) => {
           const list = rows.filter((r) => r.kind === g);
@@ -89,7 +91,7 @@ export class Checklist extends Component<{ ctx: Ctx }, State> {
           return (
             <section key={g} className="req-group" aria-label={KIND[g]}>
               <h2 className="group-title">
-                {g === 'document' ? 'Pièces à fournir' : g === 'condition' ? 'Conditions d’éligibilité' : 'Règles à respecter'}
+                {g === 'document' ? L('Pièces à fournir', 'Required documents') : g === 'condition' ? L('Conditions d’éligibilité', 'Eligibility conditions') : L('Règles à respecter', 'Rules to follow')}
                 <span className="muted"> {list.length}</span>
               </h2>
               <ul className="req-list">
@@ -103,9 +105,9 @@ export class Checklist extends Component<{ ctx: Ctx }, State> {
                         <span className="req-main">
                           <span className="req-label">{r.label}</span>
                           <span className="req-sub">
-                            {r.critical ? <span className="flag flag-critical">critique</span> : null}
-                            {!r.required ? <span className="flag">facultatif</span> : null}
-                            {r.min_count > 1 ? <span className="flag">{r.min_count} pièces</span> : null}
+                            {r.critical ? <span className="flag flag-critical">{L('critique', 'critical')}</span> : null}
+                            {!r.required ? <span className="flag">{L('facultatif', 'optional')}</span> : null}
+                            {r.min_count > 1 ? <span className="flag">{L(`${r.min_count} pièces`, `${r.min_count} documents`)}</span> : null}
                             {chips.map((c) => (
                               <span key={c} className="flag">
                                 {c}
@@ -118,7 +120,7 @@ export class Checklist extends Component<{ ctx: Ctx }, State> {
                             )}
                           </span>
                         </span>
-                        <span className="req-src">{r.origin === 'manual' ? 'ajoutée' : r.source_page ? `p. ${r.source_page}` : ''}</span>
+                        <span className="req-src">{r.origin === 'manual' ? L('ajoutée', 'added') : r.source_page ? `p. ${r.source_page}` : ''}</span>
                       </button>
                     </li>
                   );
@@ -139,7 +141,7 @@ class AddRequirement extends Component<{ ctx: Ctx; onClose: () => void }, { labe
   submit = async (e: any) => {
     e.preventDefault();
     if (this.state.label.trim().length < 3) {
-      this.setState({ error: 'Décrivez l’exigence en quelques mots (3 caractères minimum).' });
+      this.setState({ error: L('Décrivez l’exigence en quelques mots (3 caractères minimum).', 'Describe the requirement in a few words (at least 3 characters).') });
       return;
     }
     this.setState({ busy: true });
@@ -152,7 +154,7 @@ class AddRequirement extends Component<{ ctx: Ctx; onClose: () => void }, { labe
           critical: this.state.critical,
           required: this.state.required,
         }),
-      'Exigence ajoutée à la checklist.',
+      L('Exigence ajoutée à la checklist.', 'Requirement added to the checklist.'),
     );
     if (ok) this.props.onClose();
     else this.setState({ busy: false });
@@ -162,32 +164,32 @@ class AddRequirement extends Component<{ ctx: Ctx; onClose: () => void }, { labe
     const types = this.props.ctx.state.proof_types.filter((t) => t.code !== 'other');
     return (
       <Modal
-        title="Ajouter une exigence"
+        title={L('Ajouter une exigence', 'Add a requirement')}
         onClose={this.props.onClose}
         busy={this.state.busy}
         footer={[
           <button key="c" type="button" className="btn btn-quiet" onClick={this.props.onClose} disabled={this.state.busy}>
-            Annuler
+            {L('Annuler', 'Cancel')}
           </button>,
           <button key="s" type="submit" form="add-req" className="btn btn-primary" disabled={this.state.busy}>
-            {this.state.busy ? 'Ajout…' : 'Ajouter'}
+            {this.state.busy ? L('Ajout…', 'Adding…') : L('Ajouter', 'Add')}
           </button>,
         ]}
       >
         <form id="add-req" className="form" onSubmit={this.submit} noValidate>
           <label className="field">
-            <span className="field-label">Exigence</span>
+            <span className="field-label">{L('Exigence', 'Requirement')}</span>
             <textarea
               rows={3}
               maxLength={300}
               data-autofocus
               value={this.state.label}
-              placeholder="Ex. Attestation de domiciliation bancaire"
+              placeholder={L('Ex. Attestation de domiciliation bancaire', 'e.g. Bank account certificate')}
               onChange={(e: any) => this.setState({ label: e.target.value, error: '' })}
             />
           </label>
           <fieldset className="field">
-            <legend className="field-label">Nature</legend>
+            <legend className="field-label">{L('Nature', 'Kind')}</legend>
             <div className="segmented">
               {(['document', 'condition', 'rule'] as Kind[]).map((k) => (
                 <label key={k} className={cx('seg-opt', this.state.kind === k && 'seg-on')}>
@@ -200,10 +202,10 @@ class AddRequirement extends Component<{ ctx: Ctx; onClose: () => void }, { labe
           {this.state.kind === 'document' ? (
             <label className="field">
               <span className="field-label">
-                Type de pièce <span className="optional">pour le rattachement automatique</span>
+                {L('Type de pièce', 'Document type')} <span className="optional">{L('pour le rattachement automatique', 'for automatic linking')}</span>
               </span>
               <select value={this.state.proof} onChange={(e: any) => this.setState({ proof: e.target.value })}>
-                <option value="">Non précisé</option>
+                <option value="">{L('Non précisé', 'Not specified')}</option>
                 {types.map((t) => (
                   <option key={t.code} value={t.code}>
                     {t.label}
@@ -214,11 +216,11 @@ class AddRequirement extends Component<{ ctx: Ctx; onClose: () => void }, { labe
           ) : null}
           <label className="check">
             <input type="checkbox" checked={this.state.critical} onChange={(e: any) => this.setState({ critical: e.target.checked })} />
-            Critique (le dossier est irrecevable sans elle)
+            {L('Critique (le dossier est irrecevable sans elle)', 'Critical (the application is rejected without it)')}
           </label>
           <label className="check">
             <input type="checkbox" checked={!this.state.required} onChange={(e: any) => this.setState({ required: !e.target.checked })} />
-            Facultative
+            {L('Facultative', 'Optional')}
           </label>
           {this.state.error ? (
             <p className="field-error" role="alert">

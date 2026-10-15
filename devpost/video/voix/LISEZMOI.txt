@@ -1,2 +1,0 @@
-Déposez ici vos répliques enregistrées : 01.m4a, 02.m4a, … (voir ../SCRIPT_VOIX_OFF.md),
-puis lancez : python scripts/add_voiceover.py

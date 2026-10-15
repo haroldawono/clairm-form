@@ -214,12 +214,28 @@ def format_amount(value: float | None, currency: str | None = None) -> str:
     if value is None:
         return "—"
     whole = f"{value:,.2f}".rstrip("0").rstrip(".") if value % 1 else f"{value:,.0f}"
-    whole = whole.replace(",", " ")
+    from ..i18n import lang
+
+    if lang() != "en":
+        whole = whole.replace(",", " ")
     symbol = {"EUR": "€", "USD": "$", "GBP": "£"}.get(currency or "", currency or "")
     return f"{whole} {symbol}".strip()
 
 
 def format_date_fr(d: date | None) -> str:
+    if not d:
+        return "—"
+    from ..i18n import lang
+
+    if lang() == "en":
+        months_en = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
+        return f"{months_en[d.month - 1]} {d.day}, {d.year}"
+    months = ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre"]
+    return f"{d.day} {months[d.month - 1]} {d.year}"
+
+
+def french_date(d: date | None) -> str:
+    """Always French (used inside the French sample documents, whatever the interface language)."""
     if not d:
         return "—"
     months = ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre"]

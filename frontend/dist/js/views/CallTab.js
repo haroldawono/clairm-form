@@ -1,6 +1,7 @@
 import { Component, cx } from '../lib/react.js';
 import { api } from '../lib/api.js';
 import { ACCEPT_CALL, size, STATUS } from '../lib/format.js';
+import { L } from '../lib/i18n.js';
 import { Icon, Spinner } from '../components/ui.js';
 import { Uploader } from '../components/Uploader.js';
 import { segment } from '../components/highlight.js';
@@ -50,8 +51,8 @@ export class CallTab extends Component {
         const results = ctx.state.assessment.requirements;
         return (React.createElement("div", { className: "call-tab" },
             React.createElement("div", { className: "call-side" },
-                React.createElement(Uploader, { ctx: ctx, role: "call", accept: ACCEPT_CALL, multiple: true, compact: calls.length > 0, title: calls.length ? 'Ajouter un document d’appel' : 'Importer le règlement de l’appel', hint: "PDF texte, Word (.docx) ou texte \u2014 20 Mo max. Annexes et formulaires officiels accept\u00E9s (5 au plus)." }),
-                calls.length ? (React.createElement("ul", { className: "call-list", "aria-label": "Documents de l\u2019appel" }, calls.map((c) => (React.createElement("li", { key: c.id, className: cx('call-item', c.id === this.state.selected && 'call-item-active') },
+                React.createElement(Uploader, { ctx: ctx, role: "call", accept: ACCEPT_CALL, multiple: true, compact: calls.length > 0, title: calls.length ? L('Ajouter un document d’appel', 'Add a call document') : L('Importer le règlement de l’appel', 'Import the call for proposals'), hint: L('PDF texte, Word (.docx) ou texte — 20 Mo max. Annexes et formulaires officiels acceptés (5 au plus).', 'Text PDF, Word (.docx) or text — 20 MB max. Annexes and official forms accepted (up to 5).') }),
+                calls.length ? (React.createElement("ul", { className: "call-list", "aria-label": L('Documents de l’appel', 'Call documents') }, calls.map((c) => (React.createElement("li", { key: c.id, className: cx('call-item', c.id === this.state.selected && 'call-item-active') },
                     React.createElement("button", { type: "button", className: "call-pick", onClick: () => this.select(c.id), "aria-pressed": c.id === this.state.selected },
                         React.createElement(Icon, { name: "doc" }),
                         React.createElement("span", { className: "call-pick-text" },
@@ -61,19 +62,20 @@ export class CallTab extends Component {
                                 size(c.size),
                                 " \u00B7 ",
                                 c.requirement_count || 0,
-                                " exigence(s)"))),
-                    React.createElement("button", { type: "button", className: "icon-btn danger-hover", "aria-label": `Retirer ${c.name}`, onClick: () => ctx.askDeleteDocument(c.id) },
+                                " ",
+                                L('exigence(s)', 'requirement(s)')))),
+                    React.createElement("button", { type: "button", className: "icon-btn danger-hover", "aria-label": L(`Retirer ${c.name}`, `Remove ${c.name}`), onClick: () => ctx.askDeleteDocument(c.id) },
                         React.createElement(Icon, { name: "trash" }))))))) : null,
-                calls.length ? (React.createElement("p", { className: "fine" }, "Les passages surlign\u00E9s sont ceux que ClairForm a retenus comme exigences. Cliquez sur un passage pour le v\u00E9rifier ou le corriger. Une phrase oubli\u00E9e ? Ajoutez-la depuis la checklist.")) : null),
+                calls.length ? (React.createElement("p", { className: "fine" }, L('Les passages surlignés sont ceux que ClairForm a retenus comme exigences. Cliquez sur un passage pour le vérifier ou le corriger. Une phrase oubliée ? Ajoutez-la depuis la checklist.', 'Highlighted passages are the ones ClairForm kept as requirements. Click a passage to check or correct it. A sentence was missed? Add it from the checklist.'))) : null),
             React.createElement("div", { className: "reader", "aria-live": "polite" },
                 !calls.length ? (React.createElement("div", { className: "reader-empty" },
-                    React.createElement("p", null, "Le texte de l\u2019appel s\u2019affichera ici, avec chaque exigence surlign\u00E9e \u00E0 l\u2019endroit o\u00F9 elle a \u00E9t\u00E9 lue."))) : null,
-                this.state.loading ? React.createElement(Spinner, { label: "Ouverture du texte\u2026" }) : null,
+                    React.createElement("p", null, L('Le texte de l’appel s’affichera ici, avec chaque exigence surlignée à l’endroit où elle a été lue.', 'The text of the call will appear here, with each requirement highlighted where it was read.')))) : null,
+                this.state.loading ? React.createElement(Spinner, { label: L('Ouverture du texte…', 'Opening the text…') }) : null,
                 this.state.error ? (React.createElement("div", { className: "inline-error", role: "alert" },
                     React.createElement(Icon, { name: "alert" }),
                     " ",
                     React.createElement("span", null, this.state.error),
-                    React.createElement("button", { type: "button", className: "btn btn-quiet", onClick: () => this.state.selected && this.select(this.state.selected) }, "R\u00E9essayer"))) : null,
+                    React.createElement("button", { type: "button", className: "btn btn-quiet", onClick: () => this.state.selected && this.select(this.state.selected) }, L('Réessayer', 'Try again')))) : null,
                 this.state.pages
                     ? this.state.pages.map((p) => {
                         const marks = reqs.filter((r) => r.source_page === p.n).reduce((acc, r) => acc.concat([r.excerpt].concat(r.statement.split('\n').slice(1)).map((x) => ({ id: r.id, excerpt: x }))), []);

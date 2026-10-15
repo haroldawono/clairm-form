@@ -1,6 +1,7 @@
 import { Component, cx } from '../lib/react.js';
 import { api } from '../lib/api.js';
 import { ACCEPT_PIECES, amount, dateShort, size } from '../lib/format.js';
+import { L } from '../lib/i18n.js';
 import { Icon } from '../components/ui.js';
 import { Uploader } from '../components/Uploader.js';
 import type { Ctx } from './Dossier.js';
@@ -12,7 +13,7 @@ export class Pieces extends Component<{ ctx: Ctx }, { busy: string | null }> {
   setType = async (doc: DocumentInfo, code: string) => {
     this.setState({ busy: doc.id });
     const label = this.props.ctx.state.proof_types.find((t) => t.code === code);
-    await this.props.ctx.run(() => api.setDocType(this.props.ctx.state.dossier.id, doc.id, code), `« ${doc.name} » classé comme ${label ? label.label : code}.`);
+    await this.props.ctx.run(() => api.setDocType(this.props.ctx.state.dossier.id, doc.id, code), L(`« ${doc.name} » classé comme ${label ? label.label : code}.`, `“${doc.name}” classified as ${label ? label.label : code}.`));
     this.setState({ busy: null });
   };
 
@@ -36,13 +37,13 @@ export class Pieces extends Component<{ ctx: Ctx }, { busy: string | null }> {
           role="piece"
           accept={ACCEPT_PIECES}
           multiple
-          title="Ajouter vos pièces"
-          hint="Glissez-déposez plusieurs fichiers : PDF, Word, Excel, CSV, texte, ou photos (JPG, PNG) — 20 Mo max. par fichier."
+          title={L('Ajouter vos pièces', 'Add your documents')}
+          hint={L('Glissez-déposez plusieurs fichiers : PDF, Word, Excel, CSV, texte, ou photos (JPG, PNG) — 20 Mo max. par fichier.', 'Drag and drop several files: PDF, Word, Excel, CSV, text or photos (JPG, PNG) — 20 MB max per file.')}
         />
         {!pieces.length ? (
           <div className="empty">
-            <p>Aucune pièce pour l’instant.</p>
-            <p className="muted">Chaque fichier est lu localement, son type est reconnu, puis il est rattaché à l’exigence correspondante.</p>
+            <p>{L('Aucune pièce pour l’instant.', 'No documents yet.')}</p>
+            <p className="muted">{L('Chaque fichier est lu, son type est reconnu, puis il est rattaché à l’exigence correspondante.', 'Each file is read, its type recognised, and it is linked to the matching requirement.')}</p>
           </div>
         ) : (
           <ul className="piece-list">
@@ -52,13 +53,13 @@ export class Pieces extends Component<{ ctx: Ctx }, { busy: string | null }> {
               const f = d.facts || {};
               const facts: string[] = [];
               if (d.page_count) facts.push(`${d.page_count} page${d.page_count > 1 ? 's' : ''}`);
-              if (f.issue_date) facts.push(`daté du ${dateShort(f.issue_date)}`);
-              if (f.expiry_date) facts.push(`expire le ${dateShort(f.expiry_date)}`);
+              if (f.issue_date) facts.push(L(`daté du ${dateShort(f.issue_date)}`, `dated ${dateShort(f.issue_date)}`));
+              if (f.expiry_date) facts.push(L(`expire le ${dateShort(f.expiry_date)}`, `expires ${dateShort(f.expiry_date)}`));
               if (f.budget && f.budget.expense_total) facts.push(`total ${amount(f.budget.expense_total, f.budget.currency)}`);
-              if (f.budget && f.budget.requested) facts.push(`demandé ${amount(f.budget.requested.amount, f.budget.currency)}`);
-              else if (f.requested_amount) facts.push(`demandé ${amount(f.requested_amount.amount, f.requested_amount.currency)}`);
+              if (f.budget && f.budget.requested) facts.push(L(`demandé ${amount(f.budget.requested.amount, f.budget.currency)}`, `requested ${amount(f.budget.requested.amount, f.budget.currency)}`));
+              else if (f.requested_amount) facts.push(L(`demandé ${amount(f.requested_amount.amount, f.requested_amount.currency)}`, `requested ${amount(f.requested_amount.amount, f.requested_amount.currency)}`));
               if (f.timeline) facts.push(`${dateShort(f.timeline.start)} → ${dateShort(f.timeline.end)}`);
-              if (!d.has_text) facts.push('aucun texte lisible');
+              if (!d.has_text) facts.push(L('aucun texte lisible', 'no readable text'));
               const typeId = `type-${d.id}`;
               return (
                 <li key={d.id} className={cx('piece', issues.some((c) => c.severity === 'error') && 'piece-error')}>
@@ -70,10 +71,10 @@ export class Pieces extends Component<{ ctx: Ctx }, { busy: string | null }> {
                       {d.ext.toUpperCase()} · {size(d.size)}
                     </span>
                     <span className="toolbar-spacer" />
-                    <a className="icon-btn" href={api.fileUrl(st.dossier.id, d.id)} download aria-label={`Télécharger ${d.name}`}>
+                    <a className="icon-btn" href={api.fileUrl(st.dossier.id, d.id)} download aria-label={L(`Télécharger ${d.name}`, `Download ${d.name}`)}>
                       <Icon name="download" />
                     </a>
-                    <button type="button" className="icon-btn danger-hover" aria-label={`Supprimer ${d.name}`} onClick={() => ctx.askDeleteDocument(d.id)}>
+                    <button type="button" className="icon-btn danger-hover" aria-label={L(`Supprimer ${d.name}`, `Delete ${d.name}`)} onClick={() => ctx.askDeleteDocument(d.id)}>
                       <Icon name="trash" />
                     </button>
                   </div>
@@ -91,20 +92,20 @@ export class Pieces extends Component<{ ctx: Ctx }, { busy: string | null }> {
                       </select>
                       <span className={cx('confidence', `conf-${d.proof_type_source === 'user' ? 'user' : d.proof_confidence}`)}>
                         {d.proof_type_source === 'user'
-                          ? 'choisi par vous'
+                          ? L('choisi par vous', 'chosen by you')
                           : d.proof_type === 'other'
-                          ? 'non reconnu'
+                          ? L('non reconnu', 'not recognised')
                           : d.proof_confidence === 'high'
-                          ? 'reconnu'
-                          : 'à vérifier'}
+                          ? L('reconnu', 'recognised')
+                          : L('à vérifier', 'to check')}
                       </span>
                     </div>
-                    {d.proof_type_source !== 'user' && d.proof_confidence !== 'high' && d.proof_reasons.length ? <p className="muted small">Indices : {d.proof_reasons.join(' ; ')}</p> : null}
+                    {d.proof_type_source !== 'user' && d.proof_confidence !== 'high' && d.proof_reasons.length ? <p className="muted small">{L('Indices :', 'Clues:')} {d.proof_reasons.join(' ; ')}</p> : null}
                     {facts.length ? <p className="piece-facts">{facts.join(' · ')}</p> : null}
                     <p className="piece-usage">
                       {used.length ? (
                         <span>
-                          Couvre :{' '}
+                          {L('Couvre :', 'Covers:')}{' '}
                           {used.map((rid, i) => (
                             <span key={rid}>
                               {i ? ', ' : ''}
@@ -115,7 +116,7 @@ export class Pieces extends Component<{ ctx: Ctx }, { busy: string | null }> {
                           ))}
                         </span>
                       ) : (
-                        <span className="muted">Rattachée à aucune exigence.</span>
+                        <span className="muted">{L('Rattachée à aucune exigence.', 'Not linked to any requirement.')}</span>
                       )}
                     </p>
                     {issues.length ? (

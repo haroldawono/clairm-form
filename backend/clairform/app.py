@@ -19,7 +19,7 @@ from starlette.responses import JSONResponse, Response
 from starlette.routing import Mount, Route
 from starlette.staticfiles import StaticFiles
 
-from . import __version__
+from . import __version__, i18n
 from .analysis import taxonomy
 from .config import Settings
 from .export import package_zip, report_pdf, slug
@@ -44,7 +44,7 @@ class ApiError(Exception):
 
 
 def error(status: int, code: str, message: str) -> JSONResponse:
-    return JSONResponse({"error": {"code": code, "message": message}}, status_code=status)
+    return JSONResponse({"error": {"code": code, "message": i18n.error_text(code, message)}}, status_code=status)
 
 
 # ---------------------------------------------------------------------------- request models
@@ -352,7 +352,7 @@ async def export_json(request: Request):
 
 
 async def proof_types(request: Request):
-    return JSONResponse({"proof_types": [{"code": t.code, "label": t.label, "external": t.external} for t in taxonomy.TYPES]})
+    return JSONResponse({"proof_types": taxonomy.types_payload()})
 
 
 # ---------------------------------------------------------------------------- middleware
@@ -373,6 +373,17 @@ class SecurityMiddleware:
         if scope["type"] != "http":
             return await self.app(scope, receive, send)
         headers = {k.decode("latin-1").lower(): v.decode("latin-1") for k, v in scope.get("headers", [])}
+        # Language of server messages: header from the interface, ?lang= on links, or the cf_lang cookie.
+        query = scope.get("query_string", b"").decode("latin-1")
+        q = re.search(r"(?:^|&)lang=(en|fr)(?:&|$)", query)
+        c = re.search(r"(?:^|;\s*)cf_lang=(en|fr)(?:;|$)", headers.get("cookie", ""))
+        token = i18n.set_lang(headers.get("x-clairform-lang") or (q.group(1) if q else None) or (c.group(1) if c else None))
+        try:
+            return await self._handle(scope, receive, send, headers)
+        finally:
+            i18n.reset_lang(token)
+
+    async def _handle(self, scope, receive, send, headers):
         host = headers.get("host", "")
         hostname = host.rsplit(":", 1)[0] if not host.startswith("[") else host.split("]")[0] + "]"
         path, method = scope.get("path", ""), scope.get("method", "GET")
@@ -399,7 +410,7 @@ class SecurityMiddleware:
             await send(message)
 
         async def reject(status, code, message):
-            await JSONResponse({"error": {"code": code, "message": message}}, status_code=status)(scope, receive, send_with_headers)
+            await error(status, code, message)(scope, receive, send_with_headers)
 
         new_cookie = None
         if self.settings.public:

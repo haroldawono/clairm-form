@@ -164,3 +164,38 @@ def classify_document(filename: str, text: str) -> tuple[str, str, list[str]]:
     else:
         confidence = "low"
     return code, confidence, reasons[code]
+
+
+# --------------------------------------------------------------------------- English labels (interface in English)
+EN_LABELS = {
+    "identity": "ID document", "registration": "Registration / statutes", "tax": "Tax certificate", "social": "Social security certificate",
+    "bank": "Bank details", "financial_statements": "Financial statements", "cv": "CV", "project_note": "Project summary",
+    "budget": "Budget forecast", "timeline": "Timeline / work plan", "support_letter": "Support / commitment letter",
+    "motivation_letter": "Cover letter", "declaration": "Sworn statement", "application_form": "Application form",
+    "address": "Proof of address", "diploma": "Diploma / certificate", "media": "Video / visuals", "other": "Other document",
+}
+EN_HINTS = {
+    "registration": "issued by an administration (registry, prefecture)", "tax": "issued by the tax administration",
+    "social": "issued by the social security body", "bank": "issued by the bank", "support_letter": "signed by a partner or an institution",
+}
+
+
+def label(code: str | None) -> str | None:
+    """Label of a document type in the current interface language."""
+    from ..i18n import lang
+
+    if not code:
+        return None
+    if lang() == "en":
+        return EN_LABELS.get(code, code)
+    return LABELS.get(code, code)
+
+
+def hint(ptype: ProofType) -> str:
+    from ..i18n import lang
+
+    return EN_HINTS.get(ptype.code, ptype.external_hint) if lang() == "en" else ptype.external_hint
+
+
+def types_payload() -> list[dict]:
+    return [{"code": t.code, "label": label(t.code), "external": t.external} for t in TYPES]

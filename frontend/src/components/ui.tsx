@@ -1,5 +1,6 @@
 import { Component, cx } from '../lib/react.js';
 import { STATUS } from '../lib/format.js';
+import { L } from '../lib/i18n.js';
 import type { Status } from '../lib/types.js';
 
 // ------------------------------------------------------------------ icons (inline, stroke-based)
@@ -59,7 +60,7 @@ export function Spinner(props: { label?: string }) {
   return (
     <span className="spinner" role="status">
       <span className="spinner-ring" aria-hidden="true" />
-      {props.label ? <span>{props.label}</span> : <span className="sr-only">Chargement…</span>}
+      {props.label ? <span>{props.label}</span> : <span className="sr-only">{L('Chargement…', 'Loading…')}</span>}
     </span>
   );
 }
@@ -155,7 +156,7 @@ export class Modal extends Component<ModalProps, {}> {
               </h2>
               {this.props.subtitle ? <div className="modal-sub">{this.props.subtitle}</div> : null}
             </div>
-            <button type="button" className="icon-btn" onClick={this.props.onClose} disabled={this.props.busy} aria-label="Fermer">
+            <button type="button" className="icon-btn" onClick={this.props.onClose} disabled={this.props.busy} aria-label={L('Fermer', 'Close')}>
               <Icon name="close" />
             </button>
           </header>
@@ -184,10 +185,10 @@ export function ConfirmDialog(props: {
       busy={props.busy}
       footer={[
         <button key="c" type="button" className="btn btn-quiet" onClick={props.onCancel} disabled={props.busy} data-autofocus>
-          Annuler
+          {L('Annuler', 'Cancel')}
         </button>,
         <button key="o" type="button" className={cx('btn', props.danger ? 'btn-danger' : 'btn-primary')} onClick={props.onConfirm} disabled={props.busy}>
-          {props.busy ? 'En cours…' : props.confirmLabel}
+          {props.busy ? L('En cours…', 'Working…') : props.confirmLabel}
         </button>,
       ]}
     >
@@ -210,7 +211,7 @@ export function Toasts(props: { items: Toast[]; onDismiss: (id: number) => void 
         <div key={t.id} className={cx('toast', `toast-${t.kind}`)} role={t.kind === 'error' ? 'alert' : 'status'}>
           <Icon name={t.kind === 'error' ? 'alert' : t.kind === 'success' ? 'check' : 'info'} />
           <span>{t.text}</span>
-          <button type="button" className="icon-btn" onClick={() => props.onDismiss(t.id)} aria-label="Fermer la notification">
+          <button type="button" className="icon-btn" onClick={() => props.onDismiss(t.id)} aria-label={L('Fermer la notification', 'Dismiss notification')}>
             <Icon name="close" size={16} />
           </button>
         </div>

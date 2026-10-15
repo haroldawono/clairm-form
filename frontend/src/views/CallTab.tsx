@@ -1,6 +1,7 @@
 import { Component, cx } from '../lib/react.js';
 import { api, ApiError } from '../lib/api.js';
 import { ACCEPT_CALL, size, STATUS } from '../lib/format.js';
+import { L } from '../lib/i18n.js';
 import { Icon, Spinner } from '../components/ui.js';
 import { Uploader } from '../components/Uploader.js';
 import { segment } from '../components/highlight.js';
@@ -68,11 +69,11 @@ export class CallTab extends Component<{ ctx: Ctx }, State> {
             accept={ACCEPT_CALL}
             multiple
             compact={calls.length > 0}
-            title={calls.length ? 'Ajouter un document d’appel' : 'Importer le règlement de l’appel'}
-            hint="PDF texte, Word (.docx) ou texte — 20 Mo max. Annexes et formulaires officiels acceptés (5 au plus)."
+            title={calls.length ? L('Ajouter un document d’appel', 'Add a call document') : L('Importer le règlement de l’appel', 'Import the call for proposals')}
+            hint={L('PDF texte, Word (.docx) ou texte — 20 Mo max. Annexes et formulaires officiels acceptés (5 au plus).', 'Text PDF, Word (.docx) or text — 20 MB max. Annexes and official forms accepted (up to 5).')}
           />
           {calls.length ? (
-            <ul className="call-list" aria-label="Documents de l’appel">
+            <ul className="call-list" aria-label={L('Documents de l’appel', 'Call documents')}>
               {calls.map((c) => (
                 <li key={c.id} className={cx('call-item', c.id === this.state.selected && 'call-item-active')}>
                   <button type="button" className="call-pick" onClick={() => this.select(c.id)} aria-pressed={c.id === this.state.selected}>
@@ -81,11 +82,11 @@ export class CallTab extends Component<{ ctx: Ctx }, State> {
                       <span className="truncate">{c.name}</span>
                       <span className="muted">
                         {c.page_count ? `${c.page_count} p. · ` : ''}
-                        {size(c.size)} · {c.requirement_count || 0} exigence(s)
+                        {size(c.size)} · {c.requirement_count || 0} {L('exigence(s)', 'requirement(s)')}
                       </span>
                     </span>
                   </button>
-                  <button type="button" className="icon-btn danger-hover" aria-label={`Retirer ${c.name}`} onClick={() => ctx.askDeleteDocument(c.id)}>
+                  <button type="button" className="icon-btn danger-hover" aria-label={L(`Retirer ${c.name}`, `Remove ${c.name}`)} onClick={() => ctx.askDeleteDocument(c.id)}>
                     <Icon name="trash" />
                   </button>
                 </li>
@@ -94,23 +95,25 @@ export class CallTab extends Component<{ ctx: Ctx }, State> {
           ) : null}
           {calls.length ? (
             <p className="fine">
-              Les passages surlignés sont ceux que ClairForm a retenus comme exigences. Cliquez sur un passage pour le vérifier ou le corriger. Une
-              phrase oubliée ? Ajoutez-la depuis la checklist.
+              {L(
+                'Les passages surlignés sont ceux que ClairForm a retenus comme exigences. Cliquez sur un passage pour le vérifier ou le corriger. Une phrase oubliée ? Ajoutez-la depuis la checklist.',
+                'Highlighted passages are the ones ClairForm kept as requirements. Click a passage to check or correct it. A sentence was missed? Add it from the checklist.',
+              )}
             </p>
           ) : null}
         </div>
         <div className="reader" aria-live="polite">
           {!calls.length ? (
             <div className="reader-empty">
-              <p>Le texte de l’appel s’affichera ici, avec chaque exigence surlignée à l’endroit où elle a été lue.</p>
+              <p>{L('Le texte de l’appel s’affichera ici, avec chaque exigence surlignée à l’endroit où elle a été lue.', 'The text of the call will appear here, with each requirement highlighted where it was read.')}</p>
             </div>
           ) : null}
-          {this.state.loading ? <Spinner label="Ouverture du texte…" /> : null}
+          {this.state.loading ? <Spinner label={L('Ouverture du texte…', 'Opening the text…')} /> : null}
           {this.state.error ? (
             <div className="inline-error" role="alert">
               <Icon name="alert" /> <span>{this.state.error}</span>
               <button type="button" className="btn btn-quiet" onClick={() => this.state.selected && this.select(this.state.selected)}>
-                Réessayer
+                {L('Réessayer', 'Try again')}
               </button>
             </div>
           ) : null}

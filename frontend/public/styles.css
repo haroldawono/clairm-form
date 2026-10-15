@@ -415,3 +415,13 @@ details.settings summary { cursor: pointer; list-style: revert; }
 
 .server-alert { display: flex; gap: 12px; align-items: flex-start; margin: 0; padding: 14px 28px; background: var(--bad-tint); color: #7a1912; border-bottom: 1px solid #ebb9b3; }
 .server-alert p { margin: 4px 0 0; }
+
+/* ------------------------------------------------------------------ language switch */
+.topbar { justify-content: flex-start; }
+.topbar .local-badge { margin-left: auto; }
+.lang-switch { display: inline-flex; border: 1px solid var(--rule); border-radius: 999px; padding: 2px; background: var(--sheet); }
+.lang-switch button { border: 0; background: transparent; color: var(--ink-2); font: 600 12.5px/1 var(--sans, inherit); letter-spacing: .04em; padding: 6px 10px; border-radius: 999px; cursor: pointer; min-height: 28px; }
+.lang-switch button:hover:not(.lang-on) { color: var(--ink); background: var(--miss-tint); }
+.lang-switch button.lang-on { background: var(--stamp); color: #fff; }
+.lang-switch button:focus-visible { outline: 2px solid var(--stamp); outline-offset: 2px; }
+@media (max-width: 640px) { .lang-switch button { padding: 6px 8px; } }

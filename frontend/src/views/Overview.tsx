@@ -1,6 +1,7 @@
 import { cx } from '../lib/react.js';
 import { Icon } from '../components/ui.js';
 import { FACT_LABELS, factValue, STATUS } from '../lib/format.js';
+import { L } from '../lib/i18n.js';
 import type { Ctx } from './Dossier.js';
 import type { Action, Status } from '../lib/types.js';
 
@@ -14,27 +15,27 @@ export function Overview(props: { ctx: Ctx }) {
   if (!calls.length && !state.requirements.length) {
     return (
       <section className="onboard">
-        <h2 className="section-title">Commencez par l’appel à projets</h2>
+        <h2 className="section-title">{L('Commencez par l’appel à projets', 'Start with the call for proposals')}</h2>
         <ol className="steps steps-cards">
           <li className="step-now">
-            <strong>Importer le règlement de l’appel</strong>
-            <span>PDF texte, Word ou .txt. ClairForm en extrait les pièces demandées, les conditions et les règles chiffrées.</span>
+            <strong>{L('Importer le règlement de l’appel', 'Import the call for proposals')}</strong>
+            <span>{L('PDF texte, Word ou .txt. ClairForm en extrait les pièces demandées, les conditions et les règles chiffrées.', 'Text PDF, Word or .txt. ClairForm extracts the required documents, conditions and numeric rules.')}</span>
             <button type="button" className="btn btn-primary" onClick={() => go('appel')}>
-              <Icon name="upload" /> Importer l’appel
+              <Icon name="upload" /> {L('Importer l’appel', 'Import the call')}
             </button>
           </li>
           <li>
-            <strong>Ajouter vos pièces</strong>
-            <span>Vous pouvez déjà les importer : elles seront rattachées dès que la checklist existera.</span>
+            <strong>{L('Ajouter vos pièces', 'Add your documents')}</strong>
+            <span>{L('Vous pouvez déjà les importer : elles seront rattachées dès que la checklist existera.', 'You can already import them: they will be linked as soon as the checklist exists.')}</span>
             <button type="button" className="btn btn-secondary" onClick={() => go('pieces')}>
-              Ajouter des pièces
+              {L('Ajouter des pièces', 'Add documents')}
             </button>
           </li>
           <li>
-            <strong>Pas de règlement numérique ?</strong>
-            <span>Saisissez les exigences à la main dans la checklist.</span>
+            <strong>{L('Pas de règlement numérique ?', 'No digital copy of the rules?')}</strong>
+            <span>{L('Saisissez les exigences à la main dans la checklist.', 'Type the requirements by hand in the checklist.')}</span>
             <button type="button" className="btn btn-secondary" onClick={() => go('checklist')}>
-              Ouvrir la checklist
+              {L('Ouvrir la checklist', 'Open the checklist')}
             </button>
           </li>
         </ol>
@@ -48,9 +49,9 @@ export function Overview(props: { ctx: Ctx }) {
       <section className="panel actions-panel" aria-labelledby="next">
         <div className="section-head">
           <h2 id="next" className="section-title">
-            Prochaines actions
+            {L('Prochaines actions', 'Next actions')}
           </h2>
-          {a.actions.length > 6 ? <span className="muted">{a.actions.length - 6} autre(s) dans la checklist</span> : null}
+          {a.actions.length > 6 ? <span className="muted">{L(`${a.actions.length - 6} autre(s) dans la checklist`, `${a.actions.length - 6} more in the checklist`)}</span> : null}
         </div>
         {actions.length ? (
           <ol className="action-list">
@@ -60,8 +61,11 @@ export function Overview(props: { ctx: Ctx }) {
           </ol>
         ) : (
           <p className="all-clear">
-            <Icon name="check" /> Toutes les exigences connues sont couvertes et aucun contrôle ne signale d’erreur. Relisez le règlement une
-            dernière fois, puis exportez le dossier.
+            <Icon name="check" />{' '}
+            {L(
+              'Toutes les exigences connues sont couvertes et aucun contrôle ne signale d’erreur. Relisez le règlement une dernière fois, puis exportez le dossier.',
+              'All known requirements are covered and no check reports an error. Read the rules one last time, then export the application.',
+            )}
           </p>
         )}
       </section>
@@ -69,7 +73,7 @@ export function Overview(props: { ctx: Ctx }) {
       <aside className="overview-side">
         <section className="panel" aria-labelledby="facts">
           <h2 id="facts" className="section-title small">
-            Lu dans l’appel
+            {L('Lu dans l’appel', 'Read from the call')}
           </h2>
           {facts.length ? (
             <dl className="facts">
@@ -86,12 +90,12 @@ export function Overview(props: { ctx: Ctx }) {
               ))}
             </dl>
           ) : (
-            <p className="muted">Aucune date limite ni règle chiffrée n’a été repérée. Saisissez la date limite via « Modifier ».</p>
+            <p className="muted">{L('Aucune date limite ni règle chiffrée n’a été repérée. Saisissez la date limite via « Modifier ».', 'No deadline or numeric rule was found. Enter the deadline with “Edit”.')}</p>
           )}
         </section>
         <section className="panel" aria-labelledby="dist">
           <h2 id="dist" className="section-title small">
-            Répartition
+            {L('Répartition', 'Breakdown')}
           </h2>
           <ul className="dist">
             {(['problem', 'missing', 'partial', 'to_verify', 'to_confirm', 'covered'] as Exclude<Status, 'ignored'>[]).map((s) => (
@@ -105,8 +109,10 @@ export function Overview(props: { ctx: Ctx }) {
             ))}
           </ul>
           <p className="fine">
-            {pieces.length} pièce(s) importée(s). Le pourcentage pondère les exigences critiques double ; une pièce « à vérifier » compte pour
-            moitié.
+            {L(
+              `${pieces.length} pièce(s) importée(s). Le pourcentage pondère les exigences critiques double ; une pièce « à vérifier » compte pour moitié.`,
+              `${pieces.length} document(s) imported. Critical requirements count double in the percentage; a document “to check” counts for half.`,
+            )}
           </p>
         </section>
       </aside>
@@ -123,7 +129,7 @@ function ActionRow(props: { action: Action; ctx: Ctx }) {
   };
   return (
     <li className={cx('action', `verb-${x.verb.toLowerCase()}`)}>
-      <span className="action-verb">{x.verb}</span>
+      <span className="action-verb">{x.verb_label || x.verb}</span>
       <div className="action-body">
         <button type="button" className="action-title" onClick={target}>
           {x.title}

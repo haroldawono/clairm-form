@@ -30,7 +30,7 @@ Ce tableau liste chaque composant tiers, son rôle et sa licence. Aucune API ni 
 | Composant | Version | Rôle | Licence |
 |---|---|---|---|
 | TypeScript | 6.0.3 | Compilation de `frontend/src` vers `frontend/dist` | Apache-2.0 |
-| imageio-ffmpeg (ffmpeg) | 0.6.0 | Conversion de la vidéo de démonstration et ajout de la voix off (`scripts/add_voiceover.py`) | BSD-2-Clause (ffmpeg : LGPL/GPL, binaire non redistribué) |
+| imageio-ffmpeg (ffmpeg) | 0.6.0 | Montage de la vidéo de démonstration (outil hors dépôt) | BSD-2-Clause (ffmpeg : LGPL/GPL, binaire non redistribué) |
 | Playwright (Python) + Chromium | 1.56.0 | Tests de bout en bout dans le navigateur, captures d’écran, vidéo de démonstration | Apache-2.0 (Chromium : BSD-3-Clause et licences associées) |
 
 ## Remplacements par rapport à la version précédente

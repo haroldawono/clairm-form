@@ -2,6 +2,7 @@ import { Component, cx } from '../lib/react.js';
 import { api, ApiError } from '../lib/api.js';
 import { Icon, Modal, Spinner } from './ui.js';
 import { segment } from './highlight.js';
+import { L } from '../lib/i18n.js';
 import type { DossierState } from '../lib/types.js';
 
 interface Props {
@@ -50,17 +51,17 @@ export class DocTextModal extends Component<Props, State> {
       <Modal
         variant="wide"
         title={doc ? doc.name : this.state.name || 'Document'}
-        subtitle={doc ? (doc.role === 'call' ? 'Texte extrait de l’appel — les passages surlignés sont des exigences' : 'Texte extrait de la pièce') : null}
+        subtitle={doc ? (doc.role === 'call' ? L('Texte extrait de l’appel — les passages surlignés sont des exigences', 'Text extracted from the call — highlighted passages are requirements') : L('Texte extrait de la pièce', 'Text extracted from the document')) : null}
         onClose={this.props.onClose}
         footer={[
           doc ? (
             <a key="dl" className="btn btn-secondary" href={api.fileUrl(this.props.dossierId, this.props.docId)} download>
-              <Icon name="download" /> Télécharger l’original
+              <Icon name="download" /> {L('Télécharger l’original', 'Download the original')}
             </a>
           ) : null,
           <span key="sp" className="toolbar-spacer" />,
           <button key="c" type="button" className="btn btn-primary" onClick={this.props.onClose}>
-            Terminé
+            {L('Terminé', 'Done')}
           </button>,
         ]}
       >
@@ -69,15 +70,17 @@ export class DocTextModal extends Component<Props, State> {
             <div className="inline-error" role="alert">
               <Icon name="alert" /> <span>{this.state.error}</span>
               <button type="button" className="btn btn-quiet" onClick={() => this.load()}>
-                Réessayer
+                {L('Réessayer', 'Try again')}
               </button>
             </div>
           ) : null}
-          {!this.state.pages && !this.state.error ? <Spinner label="Chargement du texte…" /> : null}
+          {!this.state.pages && !this.state.error ? <Spinner label={L('Chargement du texte…', 'Loading the text…')} /> : null}
           {this.state.pages && !this.state.hasText ? (
             <p className="muted">
-              Aucun texte lisible dans ce fichier (scan ou image). Téléchargez l’original pour le consulter ; son type peut être choisi dans
-              l’onglet Pièces.
+              {L(
+                'Aucun texte lisible dans ce fichier (scan ou image). Téléchargez l’original pour le consulter ; son type peut être choisi dans l’onglet Pièces.',
+                'No readable text in this file (scan or image). Download the original to view it; its type can be chosen in the Documents tab.',
+              )}
             </p>
           ) : null}
           {this.state.pages && this.state.hasText

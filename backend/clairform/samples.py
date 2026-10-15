@@ -11,7 +11,7 @@ from __future__ import annotations
 import io
 from datetime import date, datetime, timedelta
 
-from .analysis.text import add_months, format_date_fr
+from .analysis.text import add_months, french_date as format_date_fr
 
 PROGRAM_NAME = "Fonds Tremplin Impact 2027"
 FUNDER = "Agence Tremplin pour l'Innovation Solidaire"

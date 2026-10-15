@@ -1,9 +1,10 @@
 import { cx } from '../lib/react.js';
 import { Icon } from '../components/ui.js';
+import { L } from '../lib/i18n.js';
 const GROUPS = [
-    { sev: 'error', title: 'À corriger', empty: 'Aucune erreur détectée.' },
-    { sev: 'warning', title: 'À vérifier', empty: 'Aucun point d’attention.' },
-    { sev: 'info', title: 'Pour information', empty: '' },
+    { sev: 'error', title: L('À corriger', 'To fix'), empty: L('Aucune erreur détectée.', 'No errors found.') },
+    { sev: 'warning', title: L('À vérifier', 'To check'), empty: L('Aucun point d’attention.', 'Nothing to check.') },
+    { sev: 'info', title: L('Pour information', 'For information'), empty: '' },
 ];
 export function ChecksTab(props) {
     const { ctx } = props;
@@ -14,10 +15,10 @@ export function ChecksTab(props) {
     st.requirements.forEach((r) => (reqs[r.id] = r.label));
     const checks = st.assessment.checks;
     return (React.createElement("div", { className: "checks" },
-        React.createElement("p", { className: "intro-note" }, "ClairForm recalcule ces contr\u00F4les \u00E0 chaque changement : totaux et lignes du budget, plafond et cofinancement exig\u00E9s par l\u2019appel, dur\u00E9e du calendrier, validit\u00E9 et anciennet\u00E9 des pi\u00E8ces, nombre de pages, signatures, doublons. Chaque r\u00E9sultat cite la pi\u00E8ce et, si possible, la phrase du r\u00E8glement concern\u00E9e."),
+        React.createElement("p", { className: "intro-note" }, L('ClairForm recalcule ces contrôles à chaque changement : totaux et lignes du budget, plafond et cofinancement exigés par l’appel, durée du calendrier, validité et ancienneté des pièces, nombre de pages, signatures, doublons. Chaque résultat cite la pièce et, si possible, la phrase du règlement concernée.', 'ClairForm recalculates these checks after every change: budget totals and lines, cap and co-funding required by the call, timeline length, validity and age of documents, page counts, signatures, duplicates. Each result cites the document and, when possible, the sentence of the rules concerned.')),
         !checks.length ? (React.createElement("div", { className: "empty" },
-            React.createElement("p", null, "Aucun contr\u00F4le \u00E0 signaler pour le moment."),
-            React.createElement("p", { className: "muted" }, "Les contr\u00F4les portent sur les pi\u00E8ces import\u00E9es : ajoutez budget, calendrier et justificatifs pour qu\u2019ils s\u2019appliquent."))) : null,
+            React.createElement("p", null, L('Aucun contrôle à signaler pour le moment.', 'Nothing to report for now.')),
+            React.createElement("p", { className: "muted" }, L('Les contrôles portent sur les pièces importées : ajoutez budget, calendrier et justificatifs pour qu’ils s’appliquent.', 'Checks apply to imported documents: add the budget, timeline and supporting documents for them to run.')))) : null,
         checks.length
             ? GROUPS.map((g) => {
                 const list = checks.filter((c) => c.severity === g.sev);
@@ -34,19 +35,22 @@ export function ChecksTab(props) {
                             React.createElement("strong", null, c.title),
                             React.createElement("p", null, c.detail),
                             c.source && c.source.excerpt ? (React.createElement("blockquote", { className: "excerpt small" },
-                                "\u00AB ",
+                                L('«\u00a0', '“'),
                                 c.source.excerpt,
-                                " \u00BB",
+                                L('\u00a0»', '”'),
                                 ' ',
                                 React.createElement("button", { type: "button", className: "source-link", onClick: () => ctx.openDocument(c.source.document_id, c.source.page) },
-                                    "appel, p. ",
+                                    L('appel', 'call'),
+                                    ", p. ",
                                     c.source.page))) : null,
                             React.createElement("div", { className: "check-links" },
                                 c.requirement_id && reqs[c.requirement_id] ? (React.createElement("button", { type: "button", className: "link-btn", onClick: () => ctx.openRequirement(c.requirement_id) },
-                                    "Exigence : ",
+                                    L('Exigence :', 'Requirement:'),
+                                    " ",
                                     reqs[c.requirement_id])) : null,
                                 c.document_id && docs[c.document_id] ? (React.createElement("button", { type: "button", className: "link-btn", onClick: () => ctx.openDocument(c.document_id) },
-                                    "Pi\u00E8ce : ",
+                                    L('Pièce :', 'Document:'),
+                                    " ",
                                     docs[c.document_id])) : null))))))));
             })
             : null));

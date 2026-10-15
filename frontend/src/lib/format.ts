@@ -1,21 +1,28 @@
 import type { Status, Kind } from './types.js';
+import { L, LANG } from './i18n.js';
 
 export const STATUS: Record<Status, { label: string; hint: string }> = {
-  covered: { label: 'Couvert', hint: 'Une pièce ou une confirmation répond à cette exigence.' },
-  to_verify: { label: 'À vérifier', hint: 'Une pièce a été rattachée automatiquement : confirmez-la.' },
-  partial: { label: 'Incomplet', hint: 'Il manque des pièces distinctes.' },
-  missing: { label: 'Manquant', hint: 'Aucune pièce ne répond encore à cette exigence.' },
-  problem: { label: 'Problème', hint: 'Un contrôle a détecté un point à corriger.' },
-  to_confirm: { label: 'À confirmer', hint: 'Condition ou règle à confirmer par vous.' },
-  ignored: { label: 'Écartée', hint: 'Non prise en compte.' },
+  covered: { label: L('Couvert', 'Covered'), hint: L('Une pièce ou une confirmation répond à cette exigence.', 'A document or a confirmation meets this requirement.') },
+  to_verify: { label: L('À vérifier', 'To check'), hint: L('Une pièce a été rattachée automatiquement : confirmez-la.', 'A document was linked automatically: please confirm it.') },
+  partial: { label: L('Incomplet', 'Incomplete'), hint: L('Il manque des pièces distinctes.', 'Some separate documents are still missing.') },
+  missing: { label: L('Manquant', 'Missing'), hint: L('Aucune pièce ne répond encore à cette exigence.', 'No document meets this requirement yet.') },
+  problem: { label: L('Problème', 'Problem'), hint: L('Un contrôle a détecté un point à corriger.', 'A check found something to fix.') },
+  to_confirm: { label: L('À confirmer', 'To confirm'), hint: L('Condition ou règle à confirmer par vous.', 'Condition or rule for you to confirm.') },
+  ignored: { label: L('Écartée', 'Dismissed'), hint: L('Non prise en compte.', 'Not taken into account.') },
 };
 
-export const KIND: Record<Kind, string> = { document: 'Pièce à fournir', condition: "Condition d'éligibilité", rule: 'Règle à respecter' };
+export const KIND: Record<Kind, string> = {
+  document: L('Pièce à fournir', 'Required document'),
+  condition: L("Condition d'éligibilité", 'Eligibility condition'),
+  rule: L('Règle à respecter', 'Rule to follow'),
+};
 
 export const STATUS_ORDER: Status[] = ['problem', 'missing', 'partial', 'to_verify', 'to_confirm', 'covered', 'ignored'];
 
-const MONTHS = ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'];
-const MONTHS_LONG = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
+const MONTHS_FR = ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'];
+const MONTHS_LONG_FR = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
+const MONTHS_EN = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const MONTHS_LONG_EN = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
 export function parseIso(iso: string | null | undefined): Date | null {
   if (!iso) return null;
@@ -25,61 +32,66 @@ export function parseIso(iso: string | null | undefined): Date | null {
 
 export function dateShort(iso: string | null | undefined): string {
   const d = parseIso(iso);
-  return d ? `${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}` : '—';
+  if (!d) return '—';
+  return LANG === 'fr' ? `${d.getDate()} ${MONTHS_FR[d.getMonth()]} ${d.getFullYear()}` : `${MONTHS_EN[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`;
 }
 
 export function dateLong(iso: string | null | undefined): string {
   const d = parseIso(iso);
-  return d ? `${d.getDate()}${d.getDate() === 1 ? 'er' : ''} ${MONTHS_LONG[d.getMonth()]} ${d.getFullYear()}` : '—';
+  if (!d) return '—';
+  return LANG === 'fr'
+    ? `${d.getDate()}${d.getDate() === 1 ? 'er' : ''} ${MONTHS_LONG_FR[d.getMonth()]} ${d.getFullYear()}`
+    : `${MONTHS_LONG_EN[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`;
 }
 
 export function daysLabel(days: number | null): string {
   if (days === null) return '';
-  if (days < 0) return `dépassée de ${-days} j`;
-  if (days === 0) return "aujourd'hui";
-  if (days === 1) return 'demain';
-  return `dans ${days} jours`;
+  if (days < 0) return L(`dépassée de ${-days} j`, `passed ${-days} day${-days > 1 ? 's' : ''} ago`);
+  if (days === 0) return L("aujourd'hui", 'today');
+  if (days === 1) return L('demain', 'tomorrow');
+  return L(`dans ${days} jours`, `in ${days} days`);
 }
 
 export function size(bytes: number): string {
-  if (bytes < 1024) return `${bytes} o`;
-  if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} Ko`;
-  return `${(bytes / 1024 / 1024).toFixed(1).replace('.', ',')} Mo`;
+  if (bytes < 1024) return L(`${bytes} o`, `${bytes} B`);
+  if (bytes < 1024 * 1024) return L(`${Math.round(bytes / 1024)} Ko`, `${Math.round(bytes / 1024)} KB`);
+  const mb = (bytes / 1024 / 1024).toFixed(1);
+  return L(`${mb.replace('.', ',')} Mo`, `${mb} MB`);
 }
 
 export function amount(value: number, currency?: string | null): string {
-  const n = Math.round(value).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+  const n = Math.round(value).toString().replace(/\B(?=(\d{3})+(?!\d))/g, LANG === 'fr' ? ' ' : ',');
   const sym = currency === 'EUR' ? '€' : currency === 'USD' ? '$' : currency || '';
   return `${n}${sym ? ' ' + sym : ''}`;
 }
 
-export function plural(n: number, one: string, many: string): string {
-  if (n === 0) return `aucun${one.startsWith('exigence') ? 'e' : ''} ${one}`;
+export function plural(n: number, one: string, many: string, none?: string): string {
+  if (n === 0) return none || L(`aucun${one.startsWith('exigence') ? 'e' : ''} ${one}`, `no ${many}`);
   return `${n} ${n > 1 ? many : one}`;
 }
 
 export const FACT_LABELS: Record<string, string> = {
-  deadline: 'Date limite',
-  max_amount: 'Montant maximal',
-  min_cofinancing_pct: 'Cofinancement minimal',
-  max_duration_months: 'Durée maximale',
+  deadline: L('Date limite', 'Deadline'),
+  max_amount: L('Montant maximal', 'Maximum amount'),
+  min_cofinancing_pct: L('Cofinancement minimal', 'Minimum co-funding'),
+  max_duration_months: L('Durée maximale', 'Maximum duration'),
 };
 
 export function factValue(key: string, value: any, currency: string | null): string {
   if (key === 'deadline') return dateLong(value);
   if (key === 'max_amount') return amount(Number(value), currency);
-  if (key === 'min_cofinancing_pct') return `${String(value).replace('.', ',')} %`;
-  if (key === 'max_duration_months') return `${value} mois`;
+  if (key === 'min_cofinancing_pct') return L(`${String(value).replace('.', ',')} %`, `${value}%`);
+  if (key === 'max_duration_months') return L(`${value} mois`, `${value} months`);
   return String(value);
 }
 
 export function constraintChips(c: Record<string, any>): string[] {
   const out: string[] = [];
-  if (c.max_pages) out.push(`${c.max_pages} pages max.`);
-  if (c.max_age_months) out.push(`moins de ${c.max_age_months} mois`);
-  if (c.must_be_valid) out.push('en cours de validité');
-  if (c.format) out.push(`format ${String(c.format).toUpperCase()}`);
-  if (c.signed) out.push('signé');
+  if (c.max_pages) out.push(L(`${c.max_pages} pages max.`, `${c.max_pages} pages max`));
+  if (c.max_age_months) out.push(L(`moins de ${c.max_age_months} mois`, `less than ${c.max_age_months} months old`));
+  if (c.must_be_valid) out.push(L('en cours de validité', 'currently valid'));
+  if (c.format) out.push(L(`format ${String(c.format).toUpperCase()}`, `${String(c.format).toUpperCase()} format`));
+  if (c.signed) out.push(L('signé', 'signed'));
   return out;
 }
 

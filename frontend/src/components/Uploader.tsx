@@ -1,6 +1,7 @@
 import { Component, cx } from '../lib/react.js';
 import { Icon, Spinner } from './ui.js';
 import { size } from '../lib/format.js';
+import { L } from '../lib/i18n.js';
 import type { Ctx, UploadItem } from '../views/Dossier.js';
 
 interface Props {
@@ -47,7 +48,7 @@ export class Uploader extends Component<Props, { over: boolean }> {
             <span>{this.props.hint}</span>
           </div>
           <button type="button" className="btn btn-secondary" onClick={() => this.input && this.input.click()}>
-            Choisir {this.props.multiple ? 'des fichiers' : 'un fichier'}
+            {this.props.multiple ? L('Choisir des fichiers', 'Choose files') : L('Choisir un fichier', 'Choose a file')}
           </button>
           <input
             ref={(el: HTMLInputElement | null) => (this.input = el)}
@@ -83,28 +84,28 @@ function UploadRow(props: { item: UploadItem; ctx: Ctx }) {
           <span className="truncate">{u.name}</span>
           <span className="muted">{size(u.size)}</span>
         </div>
-        {u.phase === 'sending' && !u.handle ? <span className="muted small">En attente…</span> : null}
+        {u.phase === 'sending' && !u.handle ? <span className="muted small">{L('En attente…', 'Waiting…')}</span> : null}
         {u.phase === 'sending' && u.handle ? (
-          <div className="progress" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={pct} aria-label={`Envoi de ${u.name}`}>
+          <div className="progress" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={pct} aria-label={L(`Envoi de ${u.name}`, `Uploading ${u.name}`)}>
             <span style={{ width: `${pct}%` }} />
           </div>
         ) : null}
-        {u.phase === 'reading' ? <Spinner label="Lecture et analyse du document…" /> : null}
+        {u.phase === 'reading' ? <Spinner label={L('Lecture et analyse du document…', 'Reading and analysing the document…')} /> : null}
         {u.message ? <p className="up-msg">{u.message}</p> : null}
       </div>
       <div className="up-actions">
         {u.phase === 'sending' || u.phase === 'reading' ? (
           <button type="button" className="btn btn-quiet btn-sm" onClick={() => props.ctx.cancelUpload(u.key)}>
-            Annuler
+            {L('Annuler', 'Cancel')}
           </button>
         ) : null}
         {u.phase === 'error' && u.file ? (
           <button type="button" className="btn btn-quiet btn-sm" onClick={() => props.ctx.retryUpload(u.key)}>
-            Réessayer
+            {L('Réessayer', 'Try again')}
           </button>
         ) : null}
         {u.phase === 'error' || u.phase === 'done' || u.phase === 'cancelled' ? (
-          <button type="button" className="icon-btn" aria-label={`Retirer ${u.name} de la liste`} onClick={() => props.ctx.clearUpload(u.key)}>
+          <button type="button" className="icon-btn" aria-label={L(`Retirer ${u.name} de la liste`, `Remove ${u.name} from the list`)} onClick={() => props.ctx.clearUpload(u.key)}>
             <Icon name="close" size={16} />
           </button>
         ) : null}

@@ -110,7 +110,9 @@ Sur `https://github.com/VOTRE-NOM/clairform`, vous devez voir à la racine les d
 
 ---
 
-## Option B (gratuite également) — Hugging Face Spaces
+## Option B — Hugging Face Spaces (nécessite un compte PRO payant)
+
+> Vérifié le 14 octobre 2026 dans la documentation Hugging Face : la création d’un Space **Docker** demande désormais un abonnement PRO pour un compte personnel. Seuls les Spaces statiques restent gratuits, ce qui ne suffit pas pour ClairForm. Les étapes ci-dessous restent valables si vous avez PRO.
 
 Utile si Render pose problème. Ce `Dockerfile` spécifique n’a pas pu être construit ici (aucun service Docker disponible) : préférez Render, qui est l’option vérifiée.
 

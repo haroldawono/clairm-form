@@ -1,6 +1,7 @@
 import { Component, cx } from '../lib/react.js';
 import { Icon, Spinner } from './ui.js';
 import { size } from '../lib/format.js';
+import { L } from '../lib/i18n.js';
 export class Uploader extends Component {
     constructor() {
         super(...arguments);
@@ -31,9 +32,7 @@ export class Uploader extends Component {
                 React.createElement("div", { className: "dz-text" },
                     React.createElement("strong", null, this.props.title),
                     React.createElement("span", null, this.props.hint)),
-                React.createElement("button", { type: "button", className: "btn btn-secondary", onClick: () => this.input && this.input.click() },
-                    "Choisir ",
-                    this.props.multiple ? 'des fichiers' : 'un fichier'),
+                React.createElement("button", { type: "button", className: "btn btn-secondary", onClick: () => this.input && this.input.click() }, this.props.multiple ? L('Choisir des fichiers', 'Choose files') : L('Choisir un fichier', 'Choose a file')),
                 React.createElement("input", { ref: (el) => (this.input = el), className: "sr-only", type: "file", tabIndex: -1, "aria-label": this.props.title, accept: this.props.accept, multiple: this.props.multiple, onChange: (e) => this.take(e.target.files) })),
             items.length ? (React.createElement("ul", { className: "upload-queue", "aria-live": "polite" }, items.map((u) => (React.createElement(UploadRow, { key: u.key, item: u, ctx: this.props.ctx }))))) : null));
     }
@@ -47,14 +46,14 @@ function UploadRow(props) {
             React.createElement("div", { className: "up-name" },
                 React.createElement("span", { className: "truncate" }, u.name),
                 React.createElement("span", { className: "muted" }, size(u.size))),
-            u.phase === 'sending' && !u.handle ? React.createElement("span", { className: "muted small" }, "En attente\u2026") : null,
-            u.phase === 'sending' && u.handle ? (React.createElement("div", { className: "progress", role: "progressbar", "aria-valuemin": 0, "aria-valuemax": 100, "aria-valuenow": pct, "aria-label": `Envoi de ${u.name}` },
+            u.phase === 'sending' && !u.handle ? React.createElement("span", { className: "muted small" }, L('En attente…', 'Waiting…')) : null,
+            u.phase === 'sending' && u.handle ? (React.createElement("div", { className: "progress", role: "progressbar", "aria-valuemin": 0, "aria-valuemax": 100, "aria-valuenow": pct, "aria-label": L(`Envoi de ${u.name}`, `Uploading ${u.name}`) },
                 React.createElement("span", { style: { width: `${pct}%` } }))) : null,
-            u.phase === 'reading' ? React.createElement(Spinner, { label: "Lecture et analyse du document\u2026" }) : null,
+            u.phase === 'reading' ? React.createElement(Spinner, { label: L('Lecture et analyse du document…', 'Reading and analysing the document…') }) : null,
             u.message ? React.createElement("p", { className: "up-msg" }, u.message) : null),
         React.createElement("div", { className: "up-actions" },
-            u.phase === 'sending' || u.phase === 'reading' ? (React.createElement("button", { type: "button", className: "btn btn-quiet btn-sm", onClick: () => props.ctx.cancelUpload(u.key) }, "Annuler")) : null,
-            u.phase === 'error' && u.file ? (React.createElement("button", { type: "button", className: "btn btn-quiet btn-sm", onClick: () => props.ctx.retryUpload(u.key) }, "R\u00E9essayer")) : null,
-            u.phase === 'error' || u.phase === 'done' || u.phase === 'cancelled' ? (React.createElement("button", { type: "button", className: "icon-btn", "aria-label": `Retirer ${u.name} de la liste`, onClick: () => props.ctx.clearUpload(u.key) },
+            u.phase === 'sending' || u.phase === 'reading' ? (React.createElement("button", { type: "button", className: "btn btn-quiet btn-sm", onClick: () => props.ctx.cancelUpload(u.key) }, L('Annuler', 'Cancel'))) : null,
+            u.phase === 'error' && u.file ? (React.createElement("button", { type: "button", className: "btn btn-quiet btn-sm", onClick: () => props.ctx.retryUpload(u.key) }, L('Réessayer', 'Try again'))) : null,
+            u.phase === 'error' || u.phase === 'done' || u.phase === 'cancelled' ? (React.createElement("button", { type: "button", className: "icon-btn", "aria-label": L(`Retirer ${u.name} de la liste`, `Remove ${u.name} from the list`), onClick: () => props.ctx.clearUpload(u.key) },
                 React.createElement(Icon, { name: "close", size: 16 }))) : null)));
 }

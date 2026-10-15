@@ -1,5 +1,6 @@
 import { Component } from './lib/react.js';
 import { api } from './lib/api.js';
+import { L, LANG, setLang } from './lib/i18n.js';
 import { Home } from './views/Home.js';
 import { Dossier, TABS } from './views/Dossier.js';
 import { Icon, Spinner, Toasts } from './components/ui.js';
@@ -76,7 +77,7 @@ class App extends Component {
                 const s = await api.create(title, program, deadline);
                 this.setState({ current: s });
                 this.navigate(`#/d/${s.dossier.id}/synthese`);
-                this.notify('success', 'Dossier créé. Importez maintenant le règlement de l’appel.');
+                this.notify('success', L('Dossier créé. Importez maintenant le règlement de l’appel.', 'Application created. Now import the call for proposals.'));
                 return true;
             }
             catch (err) {
@@ -90,7 +91,7 @@ class App extends Component {
                 const s = await api.demo();
                 this.setState({ current: s, busy: null });
                 this.navigate(`#/d/${s.dossier.id}/synthese`);
-                this.notify('info', 'Dossier prérempli créé : l’appel et les pièces viennent d’être analysés.');
+                this.notify('info', L('Dossier prérempli créé : l’appel et les pièces viennent d’être analysés.', 'Sample application created: the call and the documents have just been analysed.'));
             }
             catch (err) {
                 this.setState({ busy: null });
@@ -100,7 +101,7 @@ class App extends Component {
         this.remove = async (id) => {
             try {
                 await api.remove(id);
-                this.notify('success', 'Dossier supprimé.');
+                this.notify('success', L('Dossier supprimé.', 'Application deleted.'));
                 this.loadList();
                 return true;
             }
@@ -133,15 +134,15 @@ class App extends Component {
             const notFound = this.state.currentError.code === 'NOT-FOUND';
             body = (React.createElement("main", { className: "center-state", id: "main" },
                 React.createElement(Icon, { name: "alert", size: 28 }),
-                React.createElement("h1", { className: "section-title" }, notFound ? 'Dossier introuvable' : 'Impossible d’ouvrir ce dossier'),
-                React.createElement("p", null, notFound ? 'Il a peut-être été supprimé, ou le lien est incomplet.' : this.state.currentError.message),
+                React.createElement("h1", { className: "section-title" }, notFound ? L('Dossier introuvable', 'Application not found') : L('Impossible d’ouvrir ce dossier', 'This application could not be opened')),
+                React.createElement("p", null, notFound ? L('Il a peut-être été supprimé, ou le lien est incomplet.', 'It may have been deleted, or the link is incomplete.') : this.state.currentError.message),
                 React.createElement("div", { className: "intro-actions" },
-                    !notFound ? (React.createElement("button", { type: "button", className: "btn btn-primary", onClick: () => this.loadDossier(route.id) }, "R\u00E9essayer")) : null,
-                    React.createElement("a", { className: "btn btn-secondary", href: "#/" }, "Revenir \u00E0 mes dossiers"))));
+                    !notFound ? (React.createElement("button", { type: "button", className: "btn btn-primary", onClick: () => this.loadDossier(route.id) }, L('Réessayer', 'Try again'))) : null,
+                    React.createElement("a", { className: "btn btn-secondary", href: "#/" }, L('Revenir à mes dossiers', 'Back to my applications')))));
         }
         else if (!current || current.dossier.id !== route.id) {
             body = (React.createElement("main", { className: "center-state", id: "main" },
-                React.createElement(Spinner, { label: "Ouverture du dossier\u2026" })));
+                React.createElement(Spinner, { label: L('Ouverture du dossier…', 'Opening the application…') })));
         }
         else {
             body = (React.createElement(Dossier, { state: current, tab: route.tab, requirementId: route.rid, onState: (s) => this.setState({ current: s }), notify: this.notify, navigate: this.navigate, onDeleted: () => {
@@ -153,25 +154,30 @@ class App extends Component {
             React.createElement("a", { className: "skip", href: "#main", onClick: (e) => { e.preventDefault(); const m = document.getElementById('main'); if (m) {
                     m.setAttribute('tabindex', '-1');
                     m.focus();
-                } } }, "Aller au contenu"),
+                } } }, L('Aller au contenu', 'Skip to content')),
             React.createElement("header", { className: "topbar" },
-                React.createElement("a", { className: "brand", href: "#/", "aria-label": "ClairForm \u2014 accueil" },
+                React.createElement("a", { className: "brand", href: "#/", "aria-label": L('ClairForm — accueil', 'ClairForm — home') },
                     React.createElement("span", { className: "brand-mark", "aria-hidden": "true" },
                         React.createElement("svg", { width: "22", height: "22", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "1.8", strokeLinecap: "round", strokeLinejoin: "round" },
                             React.createElement("path", { d: "M7 3h7l5 5v12a1 1 0 01-1 1H7a1 1 0 01-1-1V4a1 1 0 011-1z" }),
                             React.createElement("path", { d: "M9 13.5l2.2 2.2L15.5 11" }))),
                     React.createElement("span", { className: "brand-name" }, "ClairForm")),
-                this.state.server && this.state.server.mode === 'public' ? (React.createElement("span", { className: "local-badge", title: `Vos dossiers ne sont visibles que depuis ce navigateur. Ils sont effacés après ${this.state.server.retention_days || 7} jours sans activité. Aucun service tiers n’analyse vos documents.` },
+                this.state.server && this.state.server.mode === 'public' ? (React.createElement("span", { className: "local-badge", title: L(`Vos dossiers ne sont visibles que depuis ce navigateur. Ils sont effacés après ${this.state.server.retention_days || 7} jours sans activité. Aucun service tiers n’analyse vos documents.`, `Your applications are only visible from this browser. They are deleted after ${this.state.server.retention_days || 7} days without activity. No third-party service analyses your documents.`) },
                     React.createElement(Icon, { name: "lock", size: 15 }),
-                    " Espace priv\u00E9")) : (React.createElement("span", { className: "local-badge", title: "Les documents sont lus et analys\u00E9s sur cet ordinateur. Aucun appel r\u00E9seau sortant." },
+                    " ",
+                    L('Espace privé', 'Private space'))) : (React.createElement("span", { className: "local-badge", title: L('Les documents sont lus et analysés sur cet ordinateur. Aucun appel réseau sortant.', 'Documents are read and analysed on this computer. No outgoing network calls.') },
                     React.createElement(Icon, { name: "lock", size: 15 }),
-                    " Analyse 100 % locale"))),
+                    " ",
+                    L('Analyse 100 % locale', '100% local analysis'))),
+                React.createElement("div", { className: "lang-switch", role: "group", "aria-label": L('Langue', 'Language') },
+                    React.createElement("button", { type: "button", className: LANG === 'en' ? 'lang-on' : '', "aria-pressed": LANG === 'en', lang: "en", onClick: () => LANG !== 'en' && setLang('en') }, "EN"),
+                    React.createElement("button", { type: "button", className: LANG === 'fr' ? 'lang-on' : '', "aria-pressed": LANG === 'fr', lang: "fr", onClick: () => LANG !== 'fr' && setLang('fr') }, "FR"))),
             this.state.server && this.state.server.problems.length ? (React.createElement("div", { className: "server-alert", role: "alert" },
                 React.createElement(Icon, { name: "alert" }),
                 React.createElement("div", null,
-                    React.createElement("strong", null, "La lecture des documents ne fonctionne pas sur ce serveur."),
+                    React.createElement("strong", null, L('La lecture des documents ne fonctionne pas sur ce serveur.', 'Document reading does not work on this server.')),
                     React.createElement("p", null, this.state.server.problems.join(' · ')),
-                    React.createElement("p", null, "Relancez \u00AB pip install -r requirements.txt \u00BB dans le dossier du projet, puis red\u00E9marrez ClairForm.")))) : null,
+                    React.createElement("p", null, L('Relancez « pip install -r requirements.txt » dans le dossier du projet, puis redémarrez ClairForm.', 'Run “pip install -r requirements.txt” again in the project folder, then restart ClairForm.'))))) : null,
             body,
             React.createElement(Toasts, { items: this.state.toasts, onDismiss: this.dismiss })));
     }

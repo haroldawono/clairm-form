@@ -1,6 +1,7 @@
 import { Component, cx } from '../lib/react.js';
 import { api, upload, ApiError, UploadHandle } from '../lib/api.js';
 import { dateLong, daysLabel, plural } from '../lib/format.js';
+import { L } from '../lib/i18n.js';
 import { Icon, StatusBar, ConfirmDialog } from '../components/ui.js';
 import { RequirementDrawer } from '../components/RequirementDrawer.js';
 import { DocTextModal } from '../components/DocTextModal.js';
@@ -15,12 +16,12 @@ import type { DossierState } from '../lib/types.js';
 
 export type Tab = 'synthese' | 'appel' | 'checklist' | 'pieces' | 'controles' | 'export';
 export const TABS: { id: Tab; label: string }[] = [
-  { id: 'synthese', label: 'Synthèse' },
-  { id: 'appel', label: 'Appel' },
+  { id: 'synthese', label: L('Synthèse', 'Overview') },
+  { id: 'appel', label: L('Appel', 'Call') },
   { id: 'checklist', label: 'Checklist' },
-  { id: 'pieces', label: 'Pièces' },
-  { id: 'controles', label: 'Contrôles' },
-  { id: 'export', label: 'Exporter' },
+  { id: 'pieces', label: L('Pièces', 'Documents') },
+  { id: 'controles', label: L('Contrôles', 'Checks') },
+  { id: 'export', label: L('Exporter', 'Export') },
 ];
 
 export interface UploadItem {
@@ -88,7 +89,7 @@ export class Dossier extends Component<Props, State> {
       if (success) this.props.notify('success', success);
       return true;
     } catch (err) {
-      this.props.notify('error', err instanceof ApiError ? err.message : 'Une erreur inattendue est survenue.');
+      this.props.notify('error', err instanceof ApiError ? err.message : L('Une erreur inattendue est survenue.', 'An unexpected error occurred.'));
       return false;
     }
   };
@@ -125,19 +126,19 @@ export class Dossier extends Component<Props, State> {
       const d = res.document;
       const msg =
         d.role === 'call'
-          ? `${d.requirement_count || 0} exigence(s) lue(s) dans l’appel.`
+          ? L(`${d.requirement_count || 0} exigence(s) lue(s) dans l’appel.`, `${d.requirement_count || 0} requirement(s) read from the call.`)
           : d.proof_type && d.proof_type !== 'other' && !d.has_text
-          ? `Classé d’après son nom : ${d.proof_type_label}. Aucun texte lisible : vérifiez ce type.`
+          ? L(`Classé d’après son nom : ${d.proof_type_label}. Aucun texte lisible : vérifiez ce type.`, `Classified from its name: ${d.proof_type_label}. No readable text: please check this type.`)
           : d.proof_type && d.proof_type !== 'other'
-          ? `Reconnu comme : ${d.proof_type_label}.`
+          ? L(`Reconnu comme : ${d.proof_type_label}.`, `Recognised as: ${d.proof_type_label}.`)
           : d.has_text
-          ? 'Type non reconnu : choisissez-le dans la liste.'
-          : 'Pas de texte lisible (scan) : indiquez son type.';
+          ? L('Type non reconnu : choisissez-le dans la liste.', 'Type not recognised: choose it from the list.')
+          : L('Pas de texte lisible (scan) : indiquez son type.', 'No readable text (scan): please set its type.');
       this.patchUpload(key, { phase: 'done', message: msg, file: undefined, handle: undefined });
     } catch (err) {
       const e = err as ApiError;
       if (e.code === 'ABORTED' || e.code === 'UPLOAD-CANCELLED') return; // cancelUpload() reports the outcome
-      else this.patchUpload(key, { phase: 'error', message: e.message || 'Import impossible.', handle: undefined });
+      else this.patchUpload(key, { phase: 'error', message: e.message || L('Import impossible.', 'Import failed.'), handle: undefined });
     }
   };
 
@@ -145,7 +146,7 @@ export class Dossier extends Component<Props, State> {
     const item = this.state.uploads.find((u) => u.key === key);
     if (!item) return;
     if (!item.handle) {
-      if (item.phase === 'sending') this.patchUpload(key, { phase: 'cancelled', message: 'Import annulé : le fichier n’a pas été ajouté.' });
+      if (item.phase === 'sending') this.patchUpload(key, { phase: 'cancelled', message: L('Import annulé : le fichier n’a pas été ajouté.', 'Import cancelled: the file was not added.') });
       return;
     }
     const handle = item.handle;
@@ -154,9 +155,9 @@ export class Dossier extends Component<Props, State> {
     try {
       const state = await api.cancelUpload(this.props.state.dossier.id, handle.uploadId);
       if (this.alive) this.props.onState(state);
-      this.patchUpload(key, { phase: 'cancelled', message: 'Import annulé : le fichier n’a pas été ajouté.', handle: undefined });
+      this.patchUpload(key, { phase: 'cancelled', message: L('Import annulé : le fichier n’a pas été ajouté.', 'Import cancelled: the file was not added.'), handle: undefined });
     } catch (err) {
-      this.patchUpload(key, { phase: 'error', message: `Annulation non confirmée par le serveur : ${(err as Error).message}`, handle: undefined });
+      this.patchUpload(key, { phase: 'error', message: L(`Annulation non confirmée par le serveur : ${(err as Error).message}`, `Cancellation not confirmed by the server: ${(err as Error).message}`), handle: undefined });
     }
   };
 
@@ -211,19 +212,22 @@ export class Dossier extends Component<Props, State> {
         <header className="dossier-head">
           <div className="dh-title">
             <a className="back-link" href="#/">
-              <Icon name="back" size={16} /> Mes dossiers
+              <Icon name="back" size={16} /> {L('Mes dossiers', 'My applications')}
             </a>
             <h1 className="dossier-title">{d.title}</h1>
             <div className="dh-meta">
-              {d.is_demo ? <span className="tag tag-demo">Démonstration</span> : null}
+              {d.is_demo ? <span className="tag tag-demo">{L('Démonstration', 'Sample')}</span> : null}
               {d.program ? <span>{d.program}</span> : null}
               <span className={cx('deadline', days !== null && days < 0 && 'deadline-late', days !== null && days >= 0 && days <= 7 && 'deadline-soon')}>
                 {a.deadline.date
-                  ? `Date limite : ${dateLong(a.deadline.date)} — ${daysLabel(days)}${a.deadline.source === 'call' ? ' (lue dans l’appel)' : ''}`
-                  : 'Date limite inconnue'}
+                  ? L(
+                      `Date limite : ${dateLong(a.deadline.date)} — ${daysLabel(days)}${a.deadline.source === 'call' ? ' (lue dans l’appel)' : ''}`,
+                      `Deadline: ${dateLong(a.deadline.date)} — ${daysLabel(days)}${a.deadline.source === 'call' ? ' (read from the call)' : ''}`,
+                    )
+                  : L('Date limite inconnue', 'Deadline unknown')}
               </span>
               <button type="button" className="link-btn" onClick={() => this.setState({ editing: true })}>
-                <Icon name="edit" size={15} /> Modifier
+                <Icon name="edit" size={15} /> {L('Modifier', 'Edit')}
               </button>
             </div>
           </div>
@@ -235,17 +239,25 @@ export class Dossier extends Component<Props, State> {
             <StatusBar counts={a.counts} total={a.required_total} />
             <p className="score-note">
               {a.readiness.code === 'empty'
-                ? 'Importez l’appel pour obtenir la checklist.'
-                : `${plural(a.counts.covered, 'exigence couverte', 'exigences couvertes')} sur ${active} · ${plural(
-                    a.checks.filter((c) => c.severity === 'error').length,
-                    'point à corriger',
-                    'points à corriger',
-                  )}`}
+                ? L('Importez l’appel pour obtenir la checklist.', 'Import the call to get the checklist.')
+                : L(
+                    `${plural(a.counts.covered, 'exigence couverte', 'exigences couvertes')} sur ${active} · ${plural(
+                      a.checks.filter((c) => c.severity === 'error').length,
+                      'point à corriger',
+                      'points à corriger',
+                    )}`,
+                    `${a.counts.covered} of ${active} requirements covered · ${plural(
+                      a.checks.filter((c) => c.severity === 'error').length,
+                      'issue to fix',
+                      'issues to fix',
+                      'no issues to fix',
+                    )}`,
+                  )}
             </p>
           </div>
         </header>
 
-        <nav className="tabs" aria-label="Sections du dossier">
+        <nav className="tabs" aria-label={L('Sections du dossier', 'Application sections')}>
           {TABS.map((t) => (
             <a key={t.id} href={`#/d/${d.id}/${t.id}`} className={cx('tab', t.id === tab && 'tab-active')} aria-current={t.id === tab ? 'page' : undefined}>
               {t.label}
@@ -280,12 +292,12 @@ export class Dossier extends Component<Props, State> {
         ) : null}
         {this.state.editing ? (
           <NewDossierModal
-            heading="Modifier le dossier"
-            submitLabel="Enregistrer"
+            heading={L('Modifier le dossier', 'Edit application')}
+            submitLabel={L('Enregistrer', 'Save')}
             initial={{ title: d.title, program: d.program, deadline: d.deadline_source === 'user' ? d.deadline : null }}
             onClose={() => this.setState({ editing: false })}
             onSubmit={async (title, program, deadline) => {
-              const ok = await this.run(() => api.patch(d.id, { title, program, deadline }), 'Dossier mis à jour.');
+              const ok = await this.run(() => api.patch(d.id, { title, program, deadline }), L('Dossier mis à jour.', 'Application updated.'));
               if (ok) this.setState({ editing: false });
               return ok;
             }}
@@ -293,36 +305,45 @@ export class Dossier extends Component<Props, State> {
         ) : null}
         {deleteDoc ? (
           <ConfirmDialog
-            title={deleteDoc.role === 'call' ? 'Retirer ce document d’appel ?' : 'Supprimer cette pièce ?'}
+            title={deleteDoc.role === 'call' ? L('Retirer ce document d’appel ?', 'Remove this call document?') : L('Supprimer cette pièce ?', 'Delete this document?')}
             danger
             busy={this.state.busy}
-            confirmLabel="Supprimer"
+            confirmLabel={L('Supprimer', 'Delete')}
             message={
               deleteDoc.role === 'call'
-                ? `« ${deleteDoc.name} » sera supprimé, ainsi que les ${deleteDoc.requirement_count || 0} exigence(s) qui en ont été extraites (vos décisions sur ces exigences seront perdues).`
-                : `« ${deleteDoc.name} » sera supprimé du dossier et de cet ordinateur. Les exigences qu’il couvrait redeviendront à traiter.`
+                ? L(
+                    `« ${deleteDoc.name} » sera supprimé, ainsi que les ${deleteDoc.requirement_count || 0} exigence(s) qui en ont été extraites (vos décisions sur ces exigences seront perdues).`,
+                    `“${deleteDoc.name}” will be deleted, together with the ${deleteDoc.requirement_count || 0} requirement(s) extracted from it (your decisions on them will be lost).`,
+                  )
+                : L(
+                    `« ${deleteDoc.name} » sera supprimé du dossier. Les exigences qu’il couvrait redeviendront à traiter.`,
+                    `“${deleteDoc.name}” will be removed from the application. The requirements it covered will need attention again.`,
+                  )
             }
             onCancel={() => this.setState({ deleteDoc: null })}
             onConfirm={async () => {
               this.setState({ busy: true });
-              const ok = await this.run(() => api.deleteDoc(d.id, deleteDoc.id), 'Document supprimé.');
+              const ok = await this.run(() => api.deleteDoc(d.id, deleteDoc.id), L('Document supprimé.', 'Document deleted.'));
               this.setState({ busy: false, deleteDoc: ok ? null : this.state.deleteDoc });
             }}
           />
         ) : null}
         {this.state.deleteDossier ? (
           <ConfirmDialog
-            title="Supprimer tout le dossier ?"
+            title={L('Supprimer tout le dossier ?', 'Delete the whole application?')}
             danger
             busy={this.state.busy}
-            confirmLabel="Supprimer définitivement"
-            message={`Le dossier « ${d.title} », ses ${state.documents.length} document(s) et votre travail de vérification seront effacés de cet ordinateur.`}
+            confirmLabel={L('Supprimer définitivement', 'Delete permanently')}
+            message={L(
+              `Le dossier « ${d.title} », ses ${state.documents.length} document(s) et votre travail de vérification seront effacés.`,
+              `The application “${d.title}”, its ${state.documents.length} document(s) and your review work will be erased.`,
+            )}
             onCancel={() => this.setState({ deleteDossier: false })}
             onConfirm={async () => {
               this.setState({ busy: true });
               try {
                 await api.remove(d.id);
-                this.props.notify('success', 'Dossier supprimé.');
+                this.props.notify('success', L('Dossier supprimé.', 'Application deleted.'));
                 this.props.onDeleted();
               } catch (err) {
                 this.props.notify('error', (err as Error).message);
@@ -339,9 +360,9 @@ export class Dossier extends Component<Props, State> {
 function MissingRequirement(props: { onClose: () => void }) {
   return (
     <ConfirmDialog
-      title="Exigence introuvable"
-      message="Cette exigence n’existe plus dans le dossier (son document d’appel a peut-être été retiré)."
-      confirmLabel="Fermer"
+      title={L('Exigence introuvable', 'Requirement not found')}
+      message={L('Cette exigence n’existe plus dans le dossier (son document d’appel a peut-être été retiré).', 'This requirement no longer exists in the application (its call document may have been removed).')}
+      confirmLabel={L('Fermer', 'Close')}
       onConfirm={props.onClose}
       onCancel={props.onClose}
     />

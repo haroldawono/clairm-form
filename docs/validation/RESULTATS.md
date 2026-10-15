@@ -1,6 +1,6 @@
 # Résultats de validation
 
-Exécution : 2026-10-14 19:50:24 (heure locale de la machine)
+Exécution : 2026-10-15 02:46:23 (heure locale de la machine)
 
 ## Environnement
 
@@ -21,17 +21,17 @@ OK
 
 ## Vérification TypeScript (mode strict)
 
-OK (1.4 s)
+OK (1.5 s)
 
 ## Tests automatisés
 
 | Suite | Contenu | Résultat | Durée |
 |---|---|---|---|
-| test_analysis | Analyse : dates, montants, lecture de l'appel, classement des pièces, budgets | ✅ Ran 25 tests in 1.953s / OK | 2.1 s |
-| test_engine | Moteur : lecture sécurisée des fichiers, règles de contrôle, parcours complet | ✅ Ran 38 tests in 7.722s / OK | 7.9 s |
-| test_api | API HTTP réelle : flux complet, erreurs, sécurité (CSRF, Host, taille, chemins, débit) | ✅ Ran 20 tests in 13.185s / OK | 13.3 s |
-| test_e2e_browser | Navigateur Chromium : parcours utilisateur, erreurs, annulation, clavier, mobile | ✅ Ran 5 tests in 32.027s / OK | 32.2 s |
-| test_e2e_browser@public | Même parcours navigateur en configuration d’hébergement gratuit (mode public, lecture interne) | ✅ Ran 5 tests in 25.393s / OK | 25.5 s |
+| test_analysis | Analyse : dates, montants, lecture de l'appel, classement des pièces, budgets | ✅ Ran 25 tests in 1.994s / OK | 2.1 s |
+| test_engine | Moteur : lecture sécurisée des fichiers, règles de contrôle, parcours complet | ✅ Ran 38 tests in 7.413s / OK | 7.6 s |
+| test_api | API HTTP réelle : flux complet, erreurs, sécurité (CSRF, Host, taille, chemins, débit) | ✅ Ran 20 tests in 12.945s / OK | 13.1 s |
+| test_e2e_browser | Navigateur Chromium : parcours utilisateur, erreurs, annulation, clavier, mobile | ✅ Ran 6 tests in 36.540s / OK | 36.7 s |
+| test_e2e_browser@public | Même parcours navigateur en configuration d’hébergement gratuit (mode public, lecture interne) | ✅ Ran 6 tests in 31.500s / OK | 31.7 s |
 
 **Bilan : tous les contrôles exécutés ont réussi.**
 
@@ -130,7 +130,7 @@ test_upload_errors_are_explained (test_api.Api.test_upload_errors_are_explained)
 test_validation_errors (test_api.Api.test_validation_errors) ... ok
 test_allowed_hosts_are_enforced_when_configured (test_api.PublicMode.test_allowed_hosts_are_enforced_when_configured) ... ok
 test_dossier_quota (test_api.PublicMode.test_dossier_quota) ... ok
-test_iframe_embedding_option (test_api.PublicMode.test_iframe_embedding_option) ... /usr/lib/python3.13/unittest/case.py:606: ResourceWarning: unclosed <socket.socket fd=4, family=2, type=1, proto=6, laddr=('127.0.0.1', 54484), raddr=('127.0.0.1', 50903)>
+test_iframe_embedding_option (test_api.PublicMode.test_iframe_embedding_option) ... /usr/lib/python3.13/unittest/case.py:606: ResourceWarning: unclosed <socket.socket fd=4, family=2, type=1, proto=6, laddr=('127.0.0.1', 51878), raddr=('127.0.0.1', 43691)>
 test_isolation_between_visitors (test_api.PublicMode.test_isolation_between_visitors) ... ok
 test_rate_limit (test_api.RateLimit.test_rate_limit) ... ok
 ```
@@ -140,6 +140,7 @@ test_rate_limit (test_api.RateLimit.test_rate_limit) ... ok
 ```
 test_complete_journey (test_e2e_browser.Browser.test_complete_journey) ... ok
 test_delete_dossier_from_home (test_e2e_browser.Browser.test_delete_dossier_from_home) ... ok
+test_english_by_default_and_language_switch (test_e2e_browser.Browser.test_english_by_default_and_language_switch) ... ok
 test_keyboard_only_navigation (test_e2e_browser.Browser.test_keyboard_only_navigation) ... ok
 test_mobile_layout_has_no_horizontal_overflow (test_e2e_browser.Browser.test_mobile_layout_has_no_horizontal_overflow) ... ok
 test_upload_errors_cancel_and_server_failures (test_e2e_browser.Browser.test_upload_errors_cancel_and_server_failures) ... ok
@@ -150,6 +151,7 @@ test_upload_errors_cancel_and_server_failures (test_e2e_browser.Browser.test_upl
 ```
 test_complete_journey (test_e2e_browser.Browser.test_complete_journey) ... ok
 test_delete_dossier_from_home (test_e2e_browser.Browser.test_delete_dossier_from_home) ... ok
+test_english_by_default_and_language_switch (test_e2e_browser.Browser.test_english_by_default_and_language_switch) ... ok
 test_keyboard_only_navigation (test_e2e_browser.Browser.test_keyboard_only_navigation) ... ok
 test_mobile_layout_has_no_horizontal_overflow (test_e2e_browser.Browser.test_mobile_layout_has_no_horizontal_overflow) ... ok
 test_upload_errors_cancel_and_server_failures (test_e2e_browser.Browser.test_upload_errors_cancel_and_server_failures) ... ok

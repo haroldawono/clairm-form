@@ -1,5 +1,6 @@
 import { Component } from './lib/react.js';
 import { api, ApiError } from './lib/api.js';
+import { L, LANG, setLang } from './lib/i18n.js';
 import { Home } from './views/Home.js';
 import { Dossier, Tab, TABS } from './views/Dossier.js';
 import { Icon, Spinner, Toast, Toasts } from './components/ui.js';
@@ -109,7 +110,7 @@ class App extends Component<{}, State> {
       const s = await api.create(title, program, deadline);
       this.setState({ current: s });
       this.navigate(`#/d/${s.dossier.id}/synthese`);
-      this.notify('success', 'Dossier créé. Importez maintenant le règlement de l’appel.');
+      this.notify('success', L('Dossier créé. Importez maintenant le règlement de l’appel.', 'Application created. Now import the call for proposals.'));
       return true;
     } catch (err) {
       this.notify('error', (err as Error).message);
@@ -123,7 +124,7 @@ class App extends Component<{}, State> {
       const s = await api.demo();
       this.setState({ current: s, busy: null });
       this.navigate(`#/d/${s.dossier.id}/synthese`);
-      this.notify('info', 'Dossier prérempli créé : l’appel et les pièces viennent d’être analysés.');
+      this.notify('info', L('Dossier prérempli créé : l’appel et les pièces viennent d’être analysés.', 'Sample application created: the call and the documents have just been analysed.'));
     } catch (err) {
       this.setState({ busy: null });
       this.notify('error', (err as Error).message);
@@ -133,7 +134,7 @@ class App extends Component<{}, State> {
   remove = async (id: string) => {
     try {
       await api.remove(id);
-      this.notify('success', 'Dossier supprimé.');
+      this.notify('success', L('Dossier supprimé.', 'Application deleted.'));
       this.loadList();
       return true;
     } catch (err) {
@@ -164,16 +165,16 @@ class App extends Component<{}, State> {
       body = (
         <main className="center-state" id="main">
           <Icon name="alert" size={28} />
-          <h1 className="section-title">{notFound ? 'Dossier introuvable' : 'Impossible d’ouvrir ce dossier'}</h1>
-          <p>{notFound ? 'Il a peut-être été supprimé, ou le lien est incomplet.' : this.state.currentError.message}</p>
+          <h1 className="section-title">{notFound ? L('Dossier introuvable', 'Application not found') : L('Impossible d’ouvrir ce dossier', 'This application could not be opened')}</h1>
+          <p>{notFound ? L('Il a peut-être été supprimé, ou le lien est incomplet.', 'It may have been deleted, or the link is incomplete.') : this.state.currentError.message}</p>
           <div className="intro-actions">
             {!notFound ? (
               <button type="button" className="btn btn-primary" onClick={() => this.loadDossier(route.id)}>
-                Réessayer
+                {L('Réessayer', 'Try again')}
               </button>
             ) : null}
             <a className="btn btn-secondary" href="#/">
-              Revenir à mes dossiers
+              {L('Revenir à mes dossiers', 'Back to my applications')}
             </a>
           </div>
         </main>
@@ -181,7 +182,7 @@ class App extends Component<{}, State> {
     } else if (!current || current.dossier.id !== route.id) {
       body = (
         <main className="center-state" id="main">
-          <Spinner label="Ouverture du dossier…" />
+          <Spinner label={L('Ouverture du dossier…', 'Opening the application…')} />
         </main>
       );
     } else {
@@ -203,10 +204,10 @@ class App extends Component<{}, State> {
     return (
       <div className="app">
         <a className="skip" href="#main" onClick={(e: any) => { e.preventDefault(); const m = document.getElementById('main'); if (m) { m.setAttribute('tabindex', '-1'); m.focus(); } }}>
-          Aller au contenu
+          {L('Aller au contenu', 'Skip to content')}
         </a>
         <header className="topbar">
-          <a className="brand" href="#/" aria-label="ClairForm — accueil">
+          <a className="brand" href="#/" aria-label={L('ClairForm — accueil', 'ClairForm — home')}>
             <span className="brand-mark" aria-hidden="true">
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M7 3h7l5 5v12a1 1 0 01-1 1H7a1 1 0 01-1-1V4a1 1 0 011-1z" />
@@ -218,23 +219,31 @@ class App extends Component<{}, State> {
           {this.state.server && this.state.server.mode === 'public' ? (
             <span
               className="local-badge"
-              title={`Vos dossiers ne sont visibles que depuis ce navigateur. Ils sont effacés après ${this.state.server.retention_days || 7} jours sans activité. Aucun service tiers n’analyse vos documents.`}
+              title={L(`Vos dossiers ne sont visibles que depuis ce navigateur. Ils sont effacés après ${this.state.server.retention_days || 7} jours sans activité. Aucun service tiers n’analyse vos documents.`, `Your applications are only visible from this browser. They are deleted after ${this.state.server.retention_days || 7} days without activity. No third-party service analyses your documents.`)}
             >
-              <Icon name="lock" size={15} /> Espace privé
+              <Icon name="lock" size={15} /> {L('Espace privé', 'Private space')}
             </span>
           ) : (
-            <span className="local-badge" title="Les documents sont lus et analysés sur cet ordinateur. Aucun appel réseau sortant.">
-              <Icon name="lock" size={15} /> Analyse 100 % locale
+            <span className="local-badge" title={L('Les documents sont lus et analysés sur cet ordinateur. Aucun appel réseau sortant.', 'Documents are read and analysed on this computer. No outgoing network calls.')}>
+              <Icon name="lock" size={15} /> {L('Analyse 100 % locale', '100% local analysis')}
             </span>
           )}
+          <div className="lang-switch" role="group" aria-label={L('Langue', 'Language')}>
+            <button type="button" className={LANG === 'en' ? 'lang-on' : ''} aria-pressed={LANG === 'en'} lang="en" onClick={() => LANG !== 'en' && setLang('en')}>
+              EN
+            </button>
+            <button type="button" className={LANG === 'fr' ? 'lang-on' : ''} aria-pressed={LANG === 'fr'} lang="fr" onClick={() => LANG !== 'fr' && setLang('fr')}>
+              FR
+            </button>
+          </div>
         </header>
         {this.state.server && this.state.server.problems.length ? (
           <div className="server-alert" role="alert">
             <Icon name="alert" />
             <div>
-              <strong>La lecture des documents ne fonctionne pas sur ce serveur.</strong>
+              <strong>{L('La lecture des documents ne fonctionne pas sur ce serveur.', 'Document reading does not work on this server.')}</strong>
               <p>{this.state.server.problems.join(' · ')}</p>
-              <p>Relancez « pip install -r requirements.txt » dans le dossier du projet, puis redémarrez ClairForm.</p>
+              <p>{L('Relancez « pip install -r requirements.txt » dans le dossier du projet, puis redémarrez ClairForm.', 'Run “pip install -r requirements.txt” again in the project folder, then restart ClairForm.')}</p>
             </div>
           </div>
         ) : null}

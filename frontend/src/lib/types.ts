@@ -107,6 +107,7 @@ export interface Check {
 export interface Action {
   id: string;
   verb: string;
+  verb_label?: string;
   title: string;
   detail?: string;
   requirement_id?: string | null;

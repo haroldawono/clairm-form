@@ -1,5 +1,6 @@
 import { Component, cx } from '../lib/react.js';
 import { STATUS } from '../lib/format.js';
+import { L } from '../lib/i18n.js';
 // ------------------------------------------------------------------ icons (inline, stroke-based)
 const PATHS = {
     plus: 'M12 5v14M5 12h14',
@@ -33,7 +34,7 @@ export function StatusChip(props) {
 export function Spinner(props) {
     return (React.createElement("span", { className: "spinner", role: "status" },
         React.createElement("span", { className: "spinner-ring", "aria-hidden": "true" }),
-        props.label ? React.createElement("span", null, props.label) : React.createElement("span", { className: "sr-only" }, "Chargement\u2026")));
+        props.label ? React.createElement("span", null, props.label) : React.createElement("span", { className: "sr-only" }, L('Chargement…', 'Loading…'))));
 }
 // ------------------------------------------------------------------ modal / drawer
 const FOCUSABLE = 'a[href],button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])';
@@ -112,7 +113,7 @@ export class Modal extends Component {
                     React.createElement("div", null,
                         React.createElement("h2", { id: this.titleId, className: "modal-title" }, this.props.title),
                         this.props.subtitle ? React.createElement("div", { className: "modal-sub" }, this.props.subtitle) : null),
-                    React.createElement("button", { type: "button", className: "icon-btn", onClick: this.props.onClose, disabled: this.props.busy, "aria-label": "Fermer" },
+                    React.createElement("button", { type: "button", className: "icon-btn", onClick: this.props.onClose, disabled: this.props.busy, "aria-label": L('Fermer', 'Close') },
                         React.createElement(Icon, { name: "close" }))),
                 React.createElement("div", { className: "modal-body" }, this.props.children),
                 this.props.footer ? React.createElement("footer", { className: "modal-foot" }, this.props.footer) : null)), host);
@@ -120,8 +121,8 @@ export class Modal extends Component {
 }
 export function ConfirmDialog(props) {
     return (React.createElement(Modal, { title: props.title, onClose: props.onCancel, busy: props.busy, footer: [
-            React.createElement("button", { key: "c", type: "button", className: "btn btn-quiet", onClick: props.onCancel, disabled: props.busy, "data-autofocus": true }, "Annuler"),
-            React.createElement("button", { key: "o", type: "button", className: cx('btn', props.danger ? 'btn-danger' : 'btn-primary'), onClick: props.onConfirm, disabled: props.busy }, props.busy ? 'En cours…' : props.confirmLabel),
+            React.createElement("button", { key: "c", type: "button", className: "btn btn-quiet", onClick: props.onCancel, disabled: props.busy, "data-autofocus": true }, L('Annuler', 'Cancel')),
+            React.createElement("button", { key: "o", type: "button", className: cx('btn', props.danger ? 'btn-danger' : 'btn-primary'), onClick: props.onConfirm, disabled: props.busy }, props.busy ? L('En cours…', 'Working…') : props.confirmLabel),
         ] },
         React.createElement("p", { className: "confirm-text" }, props.message)));
 }
@@ -129,7 +130,7 @@ export function Toasts(props) {
     return (React.createElement("div", { className: "toasts", "aria-live": "polite", "aria-relevant": "additions" }, props.items.map((t) => (React.createElement("div", { key: t.id, className: cx('toast', `toast-${t.kind}`), role: t.kind === 'error' ? 'alert' : 'status' },
         React.createElement(Icon, { name: t.kind === 'error' ? 'alert' : t.kind === 'success' ? 'check' : 'info' }),
         React.createElement("span", null, t.text),
-        React.createElement("button", { type: "button", className: "icon-btn", onClick: () => props.onDismiss(t.id), "aria-label": "Fermer la notification" },
+        React.createElement("button", { type: "button", className: "icon-btn", onClick: () => props.onDismiss(t.id), "aria-label": L('Fermer la notification', 'Dismiss notification') },
             React.createElement(Icon, { name: "close", size: 16 })))))));
 }
 // ------------------------------------------------------------------ segmented status bar

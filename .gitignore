@@ -1,8 +1,37 @@
+# Python
 __pycache__/
-*.pyc
+*.py[cod]
 .venv/
 venv/
+env/
+.pytest_cache/
+.mypy_cache/
+
+# Données créées en faisant tourner l'application (base, fichiers envoyés)
 storage/*
 !storage/.gitkeep
+*.sqlite3
+*.sqlite3-wal
+*.sqlite3-shm
+
+# Secrets et réglages locaux
+.env
+.env.*
+
+# Outils frontend
 frontend/node_modules/
+
+# Vidéo : fichiers de travail et enregistrements bruts de la voix
 devpost/video/_raw/
+devpost/video/voix/*
+devpost/video/voice_en/*
+!devpost/video/voice_en/README.txt
+!devpost/video/voix/LISEZMOI.txt
+
+# Archives et fichiers système
+*.zip
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/

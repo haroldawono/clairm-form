@@ -35,6 +35,9 @@ def ensure_samples():
         subprocess.run([sys.executable, str(helpers.ROOT / "scripts" / "make_samples.py")], check=True)
 
 
+FR_INIT = "try { if (!localStorage.getItem('cf_lang')) localStorage.setItem('cf_lang', 'fr'); } catch (e) {}"
+
+
 @unittest.skipUnless(HAVE_PLAYWRIGHT, "Playwright non installé")
 class Browser(unittest.TestCase):
     @classmethod
@@ -59,6 +62,8 @@ class Browser(unittest.TestCase):
 
     def setUp(self):
         self.ctx = self.browser.new_context(viewport={"width": 1366, "height": 900}, accept_downloads=True)
+        if not self._testMethodName.startswith("test_english"):
+            self.ctx.add_init_script(FR_INIT)  # the detailed journeys below are written against the French interface
         self.page = self.ctx.new_page()
         self.page.set_default_timeout(20000)
         self.console: list[str] = []
@@ -344,19 +349,25 @@ class Browser(unittest.TestCase):
         self.assert_clean_console()
 
     def test_mobile_layout_has_no_horizontal_overflow(self):
+        for lang, demo in (("fr", "Découvrir avec un dossier prérempli"), ("en", "Try it with a sample application")):
+            with self.subTest(lang=lang):
+                self._mobile(lang, demo)
+
+    def _mobile(self, lang, demo):
         ctx = self.browser.new_context(viewport={"width": 375, "height": 760}, is_mobile=True, has_touch=True)
+        ctx.add_init_script(f"try {{ localStorage.setItem('cf_lang', '{lang}'); }} catch (e) {{}}")
         p = ctx.new_page()
         errors: list[str] = []
         p.on("pageerror", lambda e: errors.append(str(e)))
         p.goto(self.server.url + "/")
-        p.get_by_role("button", name="Découvrir avec un dossier prérempli").tap()
+        p.get_by_role("button", name=demo).tap()
         expect(p.locator(".dossier-title")).to_be_visible(timeout=30000)
         did = re.search(r"#/d/(dos_[0-9a-f]+)", p.url).group(1)
         for tab in ("synthese", "appel", "checklist", "pieces", "controles", "export"):
             p.evaluate(f"location.hash = '#/d/{did}/{tab}'")
             expect(p.locator(".tab-active")).to_have_attribute("href", f"#/d/{did}/{tab}")
             p.wait_for_timeout(400)
-            p.screenshot(path=str(self.shots / f"mobile_{tab}.png"), full_page=True)
+            p.screenshot(path=str(self.shots / f"mobile_{lang}_{tab}.png"), full_page=True)
             width = p.evaluate("document.documentElement.scrollWidth")
             self.assertLessEqual(width, 375, f"horizontal overflow on {tab}: {width}px")
         p.evaluate(f"location.hash = '#/d/{did}/checklist'")
@@ -365,6 +376,34 @@ class Browser(unittest.TestCase):
         self.assertLessEqual(box["width"], 375.5)
         self.assertEqual(errors, [])
         ctx.close()
+
+    def test_english_by_default_and_language_switch(self):
+        p = self.page
+        p.goto(self.server.url + "/")
+        expect(p.get_by_role("heading", name="My applications")).to_be_visible()
+        self.assertEqual(p.evaluate("document.documentElement.lang"), "en")
+        p.get_by_role("button", name="Try it with a sample application").click()
+        expect(p.locator(".dossier-title")).to_be_visible(timeout=30000)
+        expect(p.locator(".dh-score .score-label")).to_have_text("Fixes needed")
+        expect(p.get_by_role("heading", name="Next actions")).to_be_visible()
+        p.get_by_role("link", name=re.compile("^Checks")).click()
+        expect(p.get_by_text("Budget total does not add up")).to_be_visible()
+        expect(p.get_by_text("Too many pages")).to_be_visible()
+        p.get_by_role("link", name=re.compile("^Documents")).click()
+        expect(p.locator(".piece-type select").first).to_contain_text("Application form")
+        # switch to French: the page reloads and everything, including server messages, is in French
+        p.get_by_role("button", name="FR", exact=True).click()
+        expect(p.get_by_role("link", name=re.compile("^Pièces"))).to_be_visible()
+        expect(p.locator(".dh-score .score-label")).to_have_text("Corrections nécessaires")
+        self.assertEqual(p.evaluate("document.documentElement.lang"), "fr")
+        p.get_by_role("link", name=re.compile("^Contrôles")).click()
+        expect(p.get_by_text("Total du budget incohérent")).to_be_visible()
+        # the choice is remembered
+        p.goto(self.server.url + "/")
+        expect(p.get_by_role("heading", name="Mes dossiers")).to_be_visible()
+        p.get_by_role("button", name="EN", exact=True).click()
+        expect(p.get_by_role("heading", name="My applications")).to_be_visible()
+        self.assert_clean_console()
 
 
 if __name__ == "__main__":
